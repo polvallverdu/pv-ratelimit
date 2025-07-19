@@ -40,6 +40,16 @@
 				"types": "./dist/ioredis.d.cts",
 				"default": "./dist/ioredis.cjs"
 			}
+		},
+		"./memory": {
+			"import": {
+				"types": "./dist/memory.d.ts",
+				"default": "./dist/memory.js"
+			},
+			"require": {
+				"types": "./dist/memory.d.cts",
+				"default": "./dist/memory.cjs"
+			}
 		}
 	},
 	"scripts": {
