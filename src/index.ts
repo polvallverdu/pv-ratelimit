@@ -18,6 +18,10 @@ export type {
 	SlidingWindowResult,
 } from "./algorithms/slidingWindow";
 export type {
+	ThrottlingRateLimiter,
+	ThrottlingResult,
+} from "./algorithms/throttling";
+export type {
 	TokenBucketRateLimiter,
 	TokenConsumeResult,
 	TokenCountResult,
@@ -29,6 +33,7 @@ export {
 	DummyLeakyBucket,
 	DummySlidingLog,
 	DummySlidingWindow,
+	DummyThrottling,
 	DummyTokenBucket,
 } from "./dummy";
 
@@ -38,5 +43,6 @@ export {
 	IORedisLeakyBucketRateLimiter,
 	IORedisSlidingLogRateLimiter,
 	IORedisSlidingWindowRateLimiter,
+	IORedisThrottlingRateLimiter,
 	IORedisTokenBucketRateLimiter,
 } from "./ioredis";
