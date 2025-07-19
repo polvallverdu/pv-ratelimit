@@ -10,7 +10,7 @@ A comprehensive, type-safe TypeScript library providing multiple rate limiting a
 ## ✨ Features
 
 - 🔄 **6 Rate Limiting Algorithms** - Fixed Window, Sliding Window, Sliding Log, Token Bucket, Leaky Bucket, and Throttling
-- 🗄️ **Multiple Backends** - In-memory (dummy) and Redis implementations
+- 🗄️ **Multiple Backends** - Redis and dummy implementations
 - 📝 **Type-safe** - Full TypeScript support with strict typing
 - ⚡ **High performance** - Optimized Redis Lua scripts for atomic operations and Redis Cluster support
 - 🧪 **Well tested** - Comprehensive test coverage for all algorithms
