@@ -1,41 +1,41 @@
 import type Redis from "ioredis";
-import type { TokenBucketRateLimiter } from "../algorithms/tokenBucket";
 import type { Duration } from "pv-duration";
+import type { TokenBucketRateLimiter } from "../algorithms/tokenBucket";
 
 declare module "ioredis" {
-  interface Redis {
-    consumeToken(
-      key: string,
-      capacity: number,
-      refillAmount: number,
-      refillInterval: number,
-      currentTime: number,
-      requestedTokens: number
-    ): Promise<[number, number, number]>; // [success_flag, remaining_tokens, next_refill_at]
-    getRemainingTokens(
-      key: string,
-      capacity: number,
-      refillAmount: number,
-      refillInterval: number,
-      currentTime: number
-    ): Promise<[number, number]>; // [remaining_tokens, next_refill_at]
-  }
+	interface Redis {
+		consumeToken(
+			key: string,
+			capacity: number,
+			refillAmount: number,
+			refillInterval: number,
+			currentTime: number,
+			requestedTokens: number,
+		): Promise<[number, number, number]>; // [success_flag, remaining_tokens, next_refill_at]
+		getRemainingTokens(
+			key: string,
+			capacity: number,
+			refillAmount: number,
+			refillInterval: number,
+			currentTime: number,
+		): Promise<[number, number]>; // [remaining_tokens, next_refill_at]
+	}
 }
 
 export interface ConsumeResult {
-  /** Indicates whether the tokens were successfully consumed. */
-  success: boolean;
-  /** The number of tokens remaining in the bucket after this operation. */
-  remainingTokens: number;
-  /** A Unix timestamp (in seconds) indicating when the next refill will occur. */
-  nextRefillAt: number;
+	/** Indicates whether the tokens were successfully consumed. */
+	success: boolean;
+	/** The number of tokens remaining in the bucket after this operation. */
+	remainingTokens: number;
+	/** A Unix timestamp (in seconds) indicating when the next refill will occur. */
+	nextRefillAt: number;
 }
 
 export interface TokenCountResult {
-  /** The number of tokens currently in the bucket. */
-  remainingTokens: number;
-  /** A Unix timestamp (in seconds) indicating when the next refill will occur. */
-  nextRefillAt: number;
+	/** The number of tokens currently in the bucket. */
+	remainingTokens: number;
+	/** A Unix timestamp (in seconds) indicating when the next refill will occur. */
+	nextRefillAt: number;
 }
 
 const PREFIX = "token_bucket";
@@ -117,42 +117,42 @@ const PREFIX = "token_bucket";
  * ```
  */
 export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
-  private redis: Redis;
-  private capacity: number;
-  private refillAmount: number;
-  /**
-   * In seconds
-   */
-  private refillInterval: number;
+	private redis: Redis;
+	private capacity: number;
+	private refillAmount: number;
+	/**
+	 * In seconds
+	 */
+	private refillInterval: number;
 
-  constructor(
-    redisClient: Redis,
-    capacity: number,
-    refillAmount: number,
-    refillInterval: Duration
-  ) {
-    const refillIntervalSeconds = refillInterval.seconds;
-    if (capacity <= 0 || refillAmount <= 0 || refillIntervalSeconds <= 0) {
-      throw new Error(
-        "Capacity, refill amount, and interval must be positive values."
-      );
-    }
+	constructor(
+		redisClient: Redis,
+		capacity: number,
+		refillAmount: number,
+		refillInterval: Duration,
+	) {
+		const refillIntervalSeconds = refillInterval.seconds;
+		if (capacity <= 0 || refillAmount <= 0 || refillIntervalSeconds <= 0) {
+			throw new Error(
+				"Capacity, refill amount, and interval must be positive values.",
+			);
+		}
 
-    this.redis = redisClient;
-    this.capacity = capacity;
-    this.refillAmount = refillAmount;
-    this.refillInterval = refillIntervalSeconds;
+		this.redis = redisClient;
+		this.capacity = capacity;
+		this.refillAmount = refillAmount;
+		this.refillInterval = refillIntervalSeconds;
 
-    // For dummy clients
-    if (redisClient === null) {
-      return;
-    }
+		// For dummy clients
+		if (redisClient === null) {
+			return;
+		}
 
-    // Define the Lua script for consumption and register it with ioredis.
-    // This script is executed atomically on the Redis server.
-    this.redis.defineCommand("consumeToken", {
-      numberOfKeys: 1,
-      lua: `
+		// Define the Lua script for consumption and register it with ioredis.
+		// This script is executed atomically on the Redis server.
+		this.redis.defineCommand("consumeToken", {
+			numberOfKeys: 1,
+			lua: `
         local key = KEYS[1]
         local capacity = tonumber(ARGV[1])
         local refill_amount = tonumber(ARGV[2])
@@ -199,12 +199,12 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
             return {0, current_tokens, next_refill_at}
         end
       `,
-    });
+		});
 
-    // Define the Lua script for getting remaining tokens without consuming any
-    this.redis.defineCommand("getRemainingTokens", {
-      numberOfKeys: 1,
-      lua: `
+		// Define the Lua script for getting remaining tokens without consuming any
+		this.redis.defineCommand("getRemainingTokens", {
+			numberOfKeys: 1,
+			lua: `
         local key = KEYS[1]
         local capacity = tonumber(ARGV[1])
         local refill_amount = tonumber(ARGV[2])
@@ -248,63 +248,63 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
         -- Return [remaining_tokens, next_refill_at]
         return {current_tokens, next_refill_at}
       `,
-    });
-  }
+		});
+	}
 
-  /**
-   * Attempts to consume a specified number of tokens from the bucket.
-   * @param key A unique identifier for the bucket (e.g., user ID, IP address).
-   * @param tokens The number of tokens to consume (defaults to 1).
-   * @returns A promise that resolves to true if tokens were consumed, false otherwise.
-   */
-  public async consume(
-    key: string,
-    tokens: number = 1
-  ): Promise<ConsumeResult> {
-    const redisKey = `${PREFIX}:${key}`;
+	/**
+	 * Attempts to consume a specified number of tokens from the bucket.
+	 * @param key A unique identifier for the bucket (e.g., user ID, IP address).
+	 * @param tokens The number of tokens to consume (defaults to 1).
+	 * @returns A promise that resolves to true if tokens were consumed, false otherwise.
+	 */
+	public async consume(
+		key: string,
+		tokens: number = 1,
+	): Promise<ConsumeResult> {
+		const redisKey = `${PREFIX}:${key}`;
 
-    const [successFlag, remaining, nextRefill] = await this.redis.consumeToken(
-      redisKey,
-      this.capacity,
-      this.refillAmount,
-      this.refillInterval,
-      Date.now() / 1000, // Pass current time in seconds
-      tokens
-    );
+		const [successFlag, remaining, nextRefill] = await this.redis.consumeToken(
+			redisKey,
+			this.capacity,
+			this.refillAmount,
+			this.refillInterval,
+			Date.now() / 1000, // Pass current time in seconds
+			tokens,
+		);
 
-    return {
-      success: successFlag === 1,
-      remainingTokens: Math.floor(remaining), // Return a whole number
-      nextRefillAt: Math.ceil(nextRefill), // Round up to be safe
-    };
-  }
+		return {
+			success: successFlag === 1,
+			remainingTokens: Math.floor(remaining), // Return a whole number
+			nextRefillAt: Math.ceil(nextRefill), // Round up to be safe
+		};
+	}
 
-  /**
-   * Gets the current number of tokens in the bucket without consuming any.
-   * @param key A unique identifier for the bucket (e.g., user ID, IP address).
-   * @returns A promise that resolves to the current token count and next refill time.
-   */
-  public async getRemainingTokens(key: string): Promise<TokenCountResult> {
-    const redisKey = `${PREFIX}:${key}`;
+	/**
+	 * Gets the current number of tokens in the bucket without consuming any.
+	 * @param key A unique identifier for the bucket (e.g., user ID, IP address).
+	 * @returns A promise that resolves to the current token count and next refill time.
+	 */
+	public async getRemainingTokens(key: string): Promise<TokenCountResult> {
+		const redisKey = `${PREFIX}:${key}`;
 
-    const [remaining, nextRefill] = await this.redis.getRemainingTokens(
-      redisKey,
-      this.capacity,
-      this.refillAmount,
-      this.refillInterval,
-      Date.now() / 1000 // Pass current time in seconds
-    );
+		const [remaining, nextRefill] = await this.redis.getRemainingTokens(
+			redisKey,
+			this.capacity,
+			this.refillAmount,
+			this.refillInterval,
+			Date.now() / 1000, // Pass current time in seconds
+		);
 
-    return {
-      remainingTokens: Math.floor(remaining), // Return a whole number
-      nextRefillAt: Math.ceil(nextRefill), // Round up to be safe
-    };
-  }
+		return {
+			remainingTokens: Math.floor(remaining), // Return a whole number
+			nextRefillAt: Math.ceil(nextRefill), // Round up to be safe
+		};
+	}
 
-  public async addTokens(key: string, amount: number): Promise<void> {
-    if (amount <= 0) return;
-    const redisKey = `${PREFIX}:${key}`;
-    const addScript = `
+	public async addTokens(key: string, amount: number): Promise<void> {
+		if (amount <= 0) return;
+		const redisKey = `${PREFIX}:${key}`;
+		const addScript = `
         local key = KEYS[1]
         local amount = tonumber(ARGV[1])
         local capacity = tonumber(ARGV[2])
@@ -329,20 +329,20 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
         redis.call('HSET', key, 'tokens', new_tokens)
         return 0
     `;
-    await this.redis.eval(
-      addScript,
-      1,
-      redisKey,
-      amount,
-      this.capacity,
-      Date.now() / 1000
-    );
-  }
+		await this.redis.eval(
+			addScript,
+			1,
+			redisKey,
+			amount,
+			this.capacity,
+			Date.now() / 1000,
+		);
+	}
 
-  public async removeTokens(key: string, amount: number): Promise<void> {
-    if (amount <= 0) return;
-    const redisKey = `${PREFIX}:${key}`;
-    const removeScript = `
+	public async removeTokens(key: string, amount: number): Promise<void> {
+		if (amount <= 0) return;
+		const redisKey = `${PREFIX}:${key}`;
+		const removeScript = `
         local key = KEYS[1]
         local amount = tonumber(ARGV[1])
         local capacity = tonumber(ARGV[2])
@@ -367,25 +367,25 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
         redis.call('HSET', key, 'tokens', new_tokens)
         return 0
     `;
-    await this.redis.eval(
-      removeScript,
-      1,
-      redisKey,
-      amount,
-      this.capacity,
-      Date.now() / 1000
-    );
-  }
+		await this.redis.eval(
+			removeScript,
+			1,
+			redisKey,
+			amount,
+			this.capacity,
+			Date.now() / 1000,
+		);
+	}
 
-  public getCapacity(): number {
-    return this.capacity;
-  }
+	public getCapacity(): number {
+		return this.capacity;
+	}
 
-  public getRefillAmount(): number {
-    return this.refillAmount;
-  }
+	public getRefillAmount(): number {
+		return this.refillAmount;
+	}
 
-  public getRefillInterval(): number {
-    return this.refillInterval;
-  }
+	public getRefillInterval(): number {
+		return this.refillInterval;
+	}
 }

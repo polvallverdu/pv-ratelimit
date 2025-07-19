@@ -3,15 +3,15 @@ import { RedisContainer } from "@testcontainers/redis";
 import { afterAll, beforeAll } from "vitest";
 
 export function useRedisContainer() {
-  let redisContainer: StartedRedisContainer | undefined;
+	let redisContainer: StartedRedisContainer | undefined;
 
-  beforeAll(async () => {
-    redisContainer = await new RedisContainer("redis:latest").start();
-  });
+	beforeAll(async () => {
+		redisContainer = await new RedisContainer("redis:latest").start();
+	});
 
-  afterAll(async () => {
-    await redisContainer?.stop();
-  });
+	afterAll(async () => {
+		await redisContainer?.stop();
+	});
 
-  return () => redisContainer;
+	return () => redisContainer;
 }

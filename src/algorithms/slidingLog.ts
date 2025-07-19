@@ -1,26 +1,26 @@
 declare module "ioredis" {
-  interface Redis {
-    consumeSlidingLog(
-      key: string,
-      limit: number,
-      interval: number,
-      currentTime: number,
-      requestId: string
-    ): Promise<[number, number]>;
-    getSlidingLog(
-      key: string,
-      limit: number,
-      interval: number,
-      currentTime: number
-    ): Promise<number>;
-  }
+	interface Redis {
+		consumeSlidingLog(
+			key: string,
+			limit: number,
+			interval: number,
+			currentTime: number,
+			requestId: string,
+		): Promise<[number, number]>;
+		getSlidingLog(
+			key: string,
+			limit: number,
+			interval: number,
+			currentTime: number,
+		): Promise<number>;
+	}
 }
 
 export interface SlidingLogResult {
-  /** Indicates whether the request was successful. */
-  success: boolean;
-  /** The number of requests remaining in the current window. */
-  remaining: number;
+	/** Indicates whether the request was successful. */
+	success: boolean;
+	/** The number of requests remaining in the current window. */
+	remaining: number;
 }
 
 /**
@@ -49,28 +49,28 @@ export interface SlidingLogResult {
  * - **Fairness**: Ensures that the rate is maintained smoothly over time.
  */
 export interface SlidingLogRateLimiter {
-  /**
-   * Attempts to consume a token for a given key.
-   * @param key A unique identifier for the client.
-   * @param uniqueRequestId An optional unique ID for the request.
-   * @returns A promise resolving to the result of the operation.
-   */
-  consume(key: string, uniqueRequestId?: string): Promise<SlidingLogResult>;
+	/**
+	 * Attempts to consume a token for a given key.
+	 * @param key A unique identifier for the client.
+	 * @param uniqueRequestId An optional unique ID for the request.
+	 * @returns A promise resolving to the result of the operation.
+	 */
+	consume(key: string, uniqueRequestId?: string): Promise<SlidingLogResult>;
 
-  /**
-   * Retrieves the number of remaining requests for a given key.
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the number of remaining requests.
-   */
-  getRemaining(key: string): Promise<number>;
+	/**
+	 * Retrieves the number of remaining requests for a given key.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the number of remaining requests.
+	 */
+	getRemaining(key: string): Promise<number>;
 
-  /**
-   * Returns the maximum number of requests allowed in a window.
-   */
-  getLimit(): number;
+	/**
+	 * Returns the maximum number of requests allowed in a window.
+	 */
+	getLimit(): number;
 
-  /**
-   * Returns the duration of the window in seconds.
-   */
-  getInterval(): number;
+	/**
+	 * Returns the duration of the window in seconds.
+	 */
+	getInterval(): number;
 }

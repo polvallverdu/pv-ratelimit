@@ -1,8 +1,8 @@
 export interface FixedWindowResult {
-  /** Indicates whether the request was successful. */
-  success: boolean;
-  /** The number of requests remaining in the current window. */
-  remaining: number;
+	/** Indicates whether the request was successful. */
+	success: boolean;
+	/** The number of requests remaining in the current window. */
+	remaining: number;
 }
 
 /**
@@ -35,27 +35,27 @@ export interface FixedWindowResult {
  *   limit are performed as a single, atomic operation.
  */
 export interface FixedWindowRateLimiter {
-  /**
-   * Attempts to consume a token for a given key.
-   * @param key A unique identifier for the client (e.g., user ID, IP address).
-   * @returns A promise that resolves to an object indicating success and remaining tokens.
-   */
-  consume(key: string): Promise<FixedWindowResult>;
+	/**
+	 * Attempts to consume a token for a given key.
+	 * @param key A unique identifier for the client (e.g., user ID, IP address).
+	 * @returns A promise that resolves to an object indicating success and remaining tokens.
+	 */
+	consume(key: string): Promise<FixedWindowResult>;
 
-  /**
-   * Retrieves the number of remaining requests for a given key in the current window.
-   * @param key A unique identifier for the client.
-   * @returns A promise that resolves to the number of remaining requests.
-   */
-  getRemaining(key: string): Promise<number>;
+	/**
+	 * Retrieves the number of remaining requests for a given key in the current window.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise that resolves to the number of remaining requests.
+	 */
+	getRemaining(key: string): Promise<number>;
 
-  /**
-   * Returns the maximum number of requests allowed in a window.
-   */
-  getLimit(): number;
+	/**
+	 * Returns the maximum number of requests allowed in a window.
+	 */
+	getLimit(): number;
 
-  /**
-   * Returns the duration of the window in seconds.
-   */
-  getInterval(): number;
+	/**
+	 * Returns the duration of the window in seconds.
+	 */
+	getInterval(): number;
 }

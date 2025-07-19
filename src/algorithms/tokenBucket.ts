@@ -1,17 +1,17 @@
 export interface ConsumeResult {
-  /** Indicates whether the tokens were successfully consumed. */
-  success: boolean;
-  /** The number of tokens remaining in the bucket after this operation. */
-  remainingTokens: number;
-  /** A Unix timestamp (in seconds) indicating when the next refill will occur. */
-  nextRefillAt: number;
+	/** Indicates whether the tokens were successfully consumed. */
+	success: boolean;
+	/** The number of tokens remaining in the bucket after this operation. */
+	remainingTokens: number;
+	/** A Unix timestamp (in seconds) indicating when the next refill will occur. */
+	nextRefillAt: number;
 }
 
 export interface TokenCountResult {
-  /** The number of tokens currently in the bucket. */
-  remainingTokens: number;
-  /** A Unix timestamp (in seconds) indicating when the next refill will occur. */
-  nextRefillAt: number;
+	/** The number of tokens currently in the bucket. */
+	remainingTokens: number;
+	/** A Unix timestamp (in seconds) indicating when the next refill will occur. */
+	nextRefillAt: number;
 }
 
 /**
@@ -46,47 +46,47 @@ export interface TokenCountResult {
  * - **Distributed**: Works across multiple application instances
  */
 export interface TokenBucketRateLimiter {
-  /**
-   * Attempts to consume a specified number of tokens from the bucket.
-   * @param key A unique identifier for the bucket (e.g., user ID, IP address).
-   * @param tokens The number of tokens to consume (defaults to 1).
-   * @returns A promise that resolves to true if tokens were consumed, false otherwise.
-   */
-  consume(key: string, tokens?: number): Promise<ConsumeResult>;
+	/**
+	 * Attempts to consume a specified number of tokens from the bucket.
+	 * @param key A unique identifier for the bucket (e.g., user ID, IP address).
+	 * @param tokens The number of tokens to consume (defaults to 1).
+	 * @returns A promise that resolves to true if tokens were consumed, false otherwise.
+	 */
+	consume(key: string, tokens?: number): Promise<ConsumeResult>;
 
-  /**
-   * Gets the current number of tokens in the bucket without consuming any.
-   * @param key A unique identifier for the bucket (e.g., user ID, IP address).
-   * @returns A promise that resolves to the current token count and next refill time.
-   */
-  getRemainingTokens(key: string): Promise<TokenCountResult>;
+	/**
+	 * Gets the current number of tokens in the bucket without consuming any.
+	 * @param key A unique identifier for the bucket (e.g., user ID, IP address).
+	 * @returns A promise that resolves to the current token count and next refill time.
+	 */
+	getRemainingTokens(key: string): Promise<TokenCountResult>;
 
-  /**
-   * Manually adds tokens to the bucket.
-   * @param key A unique identifier for the bucket.
-   * @param amount The number of tokens to add.
-   */
-  addTokens(key: string, amount: number): Promise<void>;
+	/**
+	 * Manually adds tokens to the bucket.
+	 * @param key A unique identifier for the bucket.
+	 * @param amount The number of tokens to add.
+	 */
+	addTokens(key: string, amount: number): Promise<void>;
 
-  /**
-   * Manually removes tokens from the bucket.
-   * @param key A unique identifier for the bucket.
-   * @param amount The number of tokens to remove.
-   */
-  removeTokens(key: string, amount: number): Promise<void>;
+	/**
+	 * Manually removes tokens from the bucket.
+	 * @param key A unique identifier for the bucket.
+	 * @param amount The number of tokens to remove.
+	 */
+	removeTokens(key: string, amount: number): Promise<void>;
 
-  /**
-   * Returns the maximum capacity of the bucket.
-   */
-  getCapacity(): number;
+	/**
+	 * Returns the maximum capacity of the bucket.
+	 */
+	getCapacity(): number;
 
-  /**
-   * Returns the number of tokens added per refill interval.
-   */
-  getRefillAmount(): number;
+	/**
+	 * Returns the number of tokens added per refill interval.
+	 */
+	getRefillAmount(): number;
 
-  /**
-   * Returns the refill interval in seconds.
-   */
-  getRefillInterval(): number;
+	/**
+	 * Returns the refill interval in seconds.
+	 */
+	getRefillInterval(): number;
 }

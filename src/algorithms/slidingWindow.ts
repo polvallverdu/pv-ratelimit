@@ -1,8 +1,8 @@
 export interface SlidingWindowResult {
-  /** Indicates whether the request was successful. */
-  success: boolean;
-  /** The approximate number of requests remaining. */
-  remaining: number;
+	/** Indicates whether the request was successful. */
+	success: boolean;
+	/** The approximate number of requests remaining. */
+	remaining: number;
 }
 
 /**
@@ -28,27 +28,27 @@ export interface SlidingWindowResult {
  *    increments the current window's counter if the request is allowed.
  */
 export interface SlidingWindowRateLimiter {
-  /**
-   * Attempts to consume a token for a given key.
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the result of the operation.
-   */
-  consume(key: string): Promise<SlidingWindowResult>;
+	/**
+	 * Attempts to consume a token for a given key.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the result of the operation.
+	 */
+	consume(key: string): Promise<SlidingWindowResult>;
 
-  /**
-   * Retrieves the approximate number of remaining requests for a given key.
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the number of remaining requests.
-   */
-  getRemaining(key: string): Promise<number>;
+	/**
+	 * Retrieves the approximate number of remaining requests for a given key.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the number of remaining requests.
+	 */
+	getRemaining(key: string): Promise<number>;
 
-  /**
-   * Returns the maximum number of requests allowed in a window.
-   */
-  getLimit(): number;
+	/**
+	 * Returns the maximum number of requests allowed in a window.
+	 */
+	getLimit(): number;
 
-  /**
-   * Returns the duration of the window in seconds.
-   */
-  getInterval(): number;
+	/**
+	 * Returns the duration of the window in seconds.
+	 */
+	getInterval(): number;
 }
