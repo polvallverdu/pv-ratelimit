@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { useRedisContainer } from "../__utils__/containers";
-import { FixedWindowRateLimiter } from "../../src/algorithms/fixedWindow";
+import { IORedisFixedWindowRateLimiter } from "../../src/ioredis/IORedisFixedWindow";
+import type { FixedWindowRateLimiter } from "../../src/algorithms/fixedWindow";
 import Redis from "ioredis";
+import { Duration } from "pv-duration";
 
 describe("FixedWindowRateLimiter", () => {
   const getRedisContainer = useRedisContainer();
@@ -13,10 +15,10 @@ describe("FixedWindowRateLimiter", () => {
     const container = getRedisContainer();
     redisClient = new Redis(container?.getConnectionUrl() ?? "");
 
-    rateLimiter = new FixedWindowRateLimiter(
+    rateLimiter = new IORedisFixedWindowRateLimiter(
       redisClient,
       10, // limit
-      60 // interval (60 seconds)
+      Duration.ofSeconds(60) // interval (60 seconds)
     );
   });
 
@@ -26,20 +28,32 @@ describe("FixedWindowRateLimiter", () => {
 
   describe("Constructor", () => {
     it("should create a rate limiter with valid parameters", () => {
-      const limiter = new FixedWindowRateLimiter(redisClient, 10, 60);
+      const limiter = new IORedisFixedWindowRateLimiter(
+        redisClient,
+        10,
+        Duration.ofSeconds(60)
+      );
       expect(limiter.getLimit()).toBe(10);
       expect(limiter.getInterval()).toBe(60);
     });
 
     it("should throw error for zero limit", () => {
       expect(() => {
-        new FixedWindowRateLimiter(redisClient, 0, 60);
+        new IORedisFixedWindowRateLimiter(
+          redisClient,
+          0,
+          Duration.ofSeconds(60)
+        );
       }).toThrow("Limit and interval must be positive values.");
     });
 
     it("should throw error for zero interval", () => {
       expect(() => {
-        new FixedWindowRateLimiter(redisClient, 10, 0);
+        new IORedisFixedWindowRateLimiter(
+          redisClient,
+          10,
+          Duration.ofSeconds(0)
+        );
       }).toThrow("Limit and interval must be positive values.");
     });
   });

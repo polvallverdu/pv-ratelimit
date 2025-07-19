@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useRedisContainer } from "../__utils__/containers";
-import { LeakyBucketRateLimiter } from "../../src/algorithms/leakyBucket";
+import { IORedisLeakyBucketRateLimiter } from "../../src/ioredis/IORedisLeakyBucket";
+import type { LeakyBucketRateLimiter } from "../../src/algorithms/leakyBucket";
 import Redis from "ioredis";
+import { Duration } from "pv-duration";
 
 describe("LeakyBucketRateLimiter", () => {
   const getRedisContainer = useRedisContainer();
@@ -13,21 +15,32 @@ describe("LeakyBucketRateLimiter", () => {
     const container = getRedisContainer();
     redisClient = new Redis(container?.getConnectionUrl() ?? "");
 
-    rateLimiter = new LeakyBucketRateLimiter(
+    rateLimiter = new IORedisLeakyBucketRateLimiter(
       redisClient,
       5, // capacity
-      60 // interval for TTL
+      Duration.ofSeconds(60) // interval for TTL
     );
   });
 
   describe("Constructor", () => {
     it("should create a rate limiter with valid parameters", () => {
-      const limiter = new LeakyBucketRateLimiter(redisClient, 10, 60);
+      const limiter = new IORedisLeakyBucketRateLimiter(
+        redisClient,
+        10,
+        Duration.ofSeconds(60)
+      );
       expect(limiter.getCapacity()).toBe(10);
     });
 
     it("should throw for invalid capacity", () => {
-      expect(() => new LeakyBucketRateLimiter(redisClient, 0, 60)).toThrow();
+      expect(
+        () =>
+          new IORedisLeakyBucketRateLimiter(
+            redisClient,
+            0,
+            Duration.ofSeconds(60)
+          )
+      ).toThrow();
     });
   });
 

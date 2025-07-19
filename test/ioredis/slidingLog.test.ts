@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { useRedisContainer } from "../__utils__/containers";
-import { SlidingLogRateLimiter } from "../../src/algorithms/slidingLog";
+import { IORedisSlidingLogRateLimiter } from "../../src/ioredis/IORedisSlidingLog";
+import type { SlidingLogRateLimiter } from "../../src/algorithms/slidingLog";
 import Redis from "ioredis";
+import { Duration } from "pv-duration";
 
 describe("SlidingLogRateLimiter", () => {
   const getRedisContainer = useRedisContainer();
@@ -13,10 +15,10 @@ describe("SlidingLogRateLimiter", () => {
     const container = getRedisContainer();
     redisClient = new Redis(container?.getConnectionUrl() ?? "");
 
-    rateLimiter = new SlidingLogRateLimiter(
+    rateLimiter = new IORedisSlidingLogRateLimiter(
       redisClient,
       5, // limit
-      10 // interval (10 seconds)
+      Duration.ofSeconds(10) // interval (10 seconds)
     );
   });
 
@@ -26,14 +28,22 @@ describe("SlidingLogRateLimiter", () => {
 
   describe("Constructor", () => {
     it("should create a rate limiter with valid parameters", () => {
-      const limiter = new SlidingLogRateLimiter(redisClient, 10, 60);
+      const limiter = new IORedisSlidingLogRateLimiter(
+        redisClient,
+        10,
+        Duration.ofSeconds(60)
+      );
       expect(limiter.getLimit()).toBe(10);
       expect(limiter.getInterval()).toBe(60);
     });
 
     it("should throw error for zero limit", () => {
       expect(() => {
-        new SlidingLogRateLimiter(redisClient, 0, 60);
+        new IORedisSlidingLogRateLimiter(
+          redisClient,
+          0,
+          Duration.ofSeconds(60)
+        );
       }).toThrow("Limit and interval must be positive values.");
     });
   });

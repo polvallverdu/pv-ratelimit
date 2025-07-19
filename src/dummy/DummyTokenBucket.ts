@@ -1,19 +1,14 @@
-import {
-  TokenBucketRateLimiter,
-  type ConsumeResult,
-  type TokenCountResult,
+import type { TokenBucketRateLimiter } from "../algorithms/tokenBucket";
+import type {
+  ConsumeResult,
+  TokenCountResult,
 } from "../algorithms/tokenBucket";
 
 /**
  * A dummy token bucket rate limiter that always returns -1 for all operations.
  * This is useful for testing purposes, or when you want to disable rate limiting.
  */
-export class DummyTokenBucket extends TokenBucketRateLimiter {
-  constructor() {
-    // @ts-expect-error - Redis is not defined
-    super(null, 10, 1, 1);
-  }
-
+export class DummyTokenBucket implements TokenBucketRateLimiter {
   async consume(_key: string, _tokens: number = 1): Promise<ConsumeResult> {
     return {
       success: true,
@@ -38,6 +33,14 @@ export class DummyTokenBucket extends TokenBucketRateLimiter {
   }
 
   getCapacity(): number {
+    return -1;
+  }
+
+  getRefillAmount(): number {
+    return -1;
+  }
+
+  getRefillInterval(): number {
     return -1;
   }
 }

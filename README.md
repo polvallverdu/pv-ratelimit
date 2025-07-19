@@ -1,4 +1,4 @@
-# simple-ratelimiters
+# pv-ratelimit
 
 To install dependencies:
 

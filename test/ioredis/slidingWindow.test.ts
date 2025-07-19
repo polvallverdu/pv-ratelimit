@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { useRedisContainer } from "../__utils__/containers";
-import { SlidingWindowRateLimiter } from "../../src/algorithms/slidingWindow";
+import { IORedisSlidingWindowRateLimiter } from "../../src/ioredis/IORedisSlidingWindow";
+import type { SlidingWindowRateLimiter } from "../../src/algorithms/slidingWindow";
 import Redis from "ioredis";
+import { Duration } from "pv-duration";
 
 describe("SlidingWindowRateLimiter", () => {
   const getRedisContainer = useRedisContainer();
@@ -13,10 +15,10 @@ describe("SlidingWindowRateLimiter", () => {
     const container = getRedisContainer();
     redisClient = new Redis(container?.getConnectionUrl() ?? "");
 
-    rateLimiter = new SlidingWindowRateLimiter(
+    rateLimiter = new IORedisSlidingWindowRateLimiter(
       redisClient,
       10, // limit
-      60 // interval (60 seconds)
+      Duration.ofSeconds(60) // interval (60 seconds)
     );
   });
 

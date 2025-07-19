@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { DummyTokenBucket } from "../../src/dummy/tokenBucket";
+import { DummyTokenBucket } from "../../src/dummy/DummyTokenBucket";
 
 describe("DummyTokenBucket", () => {
   let dummyRateLimiter: DummyTokenBucket;
