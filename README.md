@@ -9,7 +9,7 @@ A comprehensive, type-safe TypeScript library providing multiple rate limiting a
 
 ## ✨ Features
 
-- 🔄 **5 Rate Limiting Algorithms** - Fixed Window, Sliding Window, Sliding Log, Token Bucket, and Leaky Bucket
+- 🔄 **6 Rate Limiting Algorithms** - Fixed Window, Sliding Window, Sliding Log, Token Bucket, Leaky Bucket, and Throttling
 - 🗄️ **Multiple Backends** - In-memory (dummy) and Redis implementations
 - 📝 **Type-safe** - Full TypeScript support with strict typing
 - ⚡ **High performance** - Optimized Redis Lua scripts for atomic operations and Redis Cluster support
@@ -47,15 +47,13 @@ npm install ioredis
 
 ## 🚀 Quick Start
 
-### In-Memory (Testing/Development)
+### Dummy (Testing/Development)
 
 ```typescript
 import { DummyFixedWindow, DummyTokenBucket } from "pv-ratelimit/dummy";
 
-// Fixed window: 10 requests per minute
 const rateLimiter = new DummyFixedWindow();
 
-// Token bucket: 100 tokens capacity, refill 10 tokens every 10 seconds
 const tokenLimiter = new DummyTokenBucket();
 
 const result = await rateLimiter.consume("user:123");
@@ -242,6 +240,41 @@ const limiter = new IORedisLeakyBucketRateLimiter(
 - More complex implementation
 - Requires request buffering logic
 
+### 6. Throttling
+
+Enforces a minimum delay between requests by tracking the last request timestamp.
+
+**Best for:** APIs that need to prevent burst traffic and ensure smooth, controlled access patterns.
+
+```typescript
+import { IORedisThrottlingRateLimiter } from "pv-ratelimit/ioredis";
+
+const throttler = new IORedisThrottlingRateLimiter(
+  redis,
+  Duration.fromSeconds(1) // minimum 1 second between requests
+);
+
+const result = await throttler.throttle("user:123");
+if (result.success) {
+  console.log("Request allowed immediately");
+} else {
+  console.log(`Request throttled. Wait ${result.waitTime}ms`);
+  console.log(`Next allowed at: ${new Date(result.nextAllowedAt)}`);
+}
+```
+
+**Pros:**
+
+- Prevents burst traffic effectively
+- Ensures smooth, predictable request distribution
+- Simple to understand and implement
+- Provides precise timing control
+
+**Cons:**
+
+- May not be suitable for high-frequency legitimate traffic
+- Less flexible than counting-based algorithms
+
 ## 📚 API Reference
 
 ### Common Interfaces
@@ -286,6 +319,23 @@ interface TokenBucketRateLimiter {
 }
 ```
 
+### Throttling
+
+```typescript
+interface ThrottlingRateLimiter {
+  throttle(key: string): Promise<ThrottlingResult>;
+  getStatus(key: string): Promise<ThrottlingResult>;
+  getMinInterval(): number;
+  getMinIntervalSeconds(): number;
+}
+
+interface ThrottlingResult {
+  success: boolean; // Whether the request was allowed immediately
+  waitTime: number; // Milliseconds to wait if throttled
+  nextAllowedAt: number; // Timestamp when next request is allowed
+}
+```
+
 ## 🏗️ Implementation Types
 
 ### Dummy Implementation
@@ -299,6 +349,7 @@ import {
   DummySlidingWindow,
   DummySlidingLog,
   DummyLeakyBucket,
+  DummyThrottling,
 } from "pv-ratelimit/dummy";
 
 // Always returns success with -1 remaining
@@ -316,6 +367,7 @@ import {
   IORedisSlidingWindowRateLimiter,
   IORedisSlidingLogRateLimiter,
   IORedisLeakyBucketRateLimiter,
+  IORedisThrottlingRateLimiter,
 } from "pv-ratelimit/ioredis";
 ```
 
@@ -425,6 +477,51 @@ class MultiLayerRateLimit {
     return true;
   }
 }
+```
+
+### API Throttling
+
+```typescript
+import { Hono } from "hono";
+import Redis from "ioredis";
+import { IORedisThrottlingRateLimiter } from "pv-ratelimit/ioredis";
+import { Duration } from "pv-duration";
+
+const app = new Hono();
+const redis = new Redis();
+
+// Enforce minimum 500ms between requests per user
+const throttler = new IORedisThrottlingRateLimiter(
+  redis,
+  Duration.fromMilliseconds(500)
+);
+
+app.use(async (c, next) => {
+  const userId = c.req.header("x-user-id") || c.req.header("x-forwarded-for");
+
+  if (!userId) {
+    return c.json({ error: "User identification required" }, 401);
+  }
+
+  const result = await throttler.throttle(userId);
+
+  if (!result.success) {
+    return c.json(
+      {
+        error: "Request throttled",
+        waitTime: result.waitTime,
+        retryAfter: new Date(result.nextAllowedAt).toISOString(),
+      },
+      429
+    );
+  }
+
+  c.header("X-Throttle-Remaining", "0"); // Always 0 for throttling
+  c.header("X-Throttle-Reset", new Date(result.nextAllowedAt).toISOString());
+  await next();
+});
+
+export default app;
 ```
 
 ## 🛠️ Development
