@@ -1,18 +1,3 @@
-declare module "ioredis" {
-	interface Redis {
-		consumeLeakyBucket(
-			key: string,
-			capacity: number,
-			requestId: string,
-			interval: number,
-		): Promise<[number, number]>;
-		getStateLeakyBucket(
-			key: string,
-			capacity: number,
-		): Promise<[number, number]>;
-	}
-}
-
 export interface LeakyBucketResult {
 	/** Indicates whether the request was successful (the bucket has capacity). */
 	success: boolean;

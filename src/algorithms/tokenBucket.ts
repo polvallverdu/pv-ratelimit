@@ -1,4 +1,4 @@
-export interface ConsumeResult {
+export interface TokenConsumeResult {
 	/** Indicates whether the tokens were successfully consumed. */
 	success: boolean;
 	/** The number of tokens remaining in the bucket after this operation. */
@@ -52,7 +52,7 @@ export interface TokenBucketRateLimiter {
 	 * @param tokens The number of tokens to consume (defaults to 1).
 	 * @returns A promise that resolves to true if tokens were consumed, false otherwise.
 	 */
-	consume(key: string, tokens?: number): Promise<ConsumeResult>;
+	consume(key: string, tokens?: number): Promise<TokenConsumeResult>;
 
 	/**
 	 * Gets the current number of tokens in the bucket without consuming any.

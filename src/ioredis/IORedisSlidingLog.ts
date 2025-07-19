@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
-import type { SlidingLogRateLimiter } from "../algorithms/slidingLog";
+import type {
+	SlidingLogRateLimiter,
+	SlidingLogResult,
+} from "../algorithms/slidingLog";
 
 declare module "ioredis" {
 	interface Redis {
@@ -19,13 +22,6 @@ declare module "ioredis" {
 			currentTime: number,
 		): Promise<number>;
 	}
-}
-
-export interface SlidingLogResult {
-	/** Indicates whether the request was successful. */
-	success: boolean;
-	/** The number of requests remaining in the current window. */
-	remaining: number;
 }
 
 const PREFIX = "sliding_log";

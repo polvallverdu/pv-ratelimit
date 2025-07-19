@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
-import type { LeakyBucketRateLimiter } from "../algorithms/leakyBucket";
+import type {
+	LeakyBucketRateLimiter,
+	LeakyBucketResult,
+	LeakyBucketState,
+} from "../algorithms/leakyBucket";
 
 declare module "ioredis" {
 	interface Redis {
@@ -16,20 +20,6 @@ declare module "ioredis" {
 			capacity: number,
 		): Promise<[number, number]>;
 	}
-}
-
-export interface LeakyBucketResult {
-	/** Indicates whether the request was successful (the bucket has capacity). */
-	success: boolean;
-	/** The remaining capacity in the bucket's queue. */
-	remaining: number;
-}
-
-export interface LeakyBucketState {
-	/** The current number of requests in the queue. */
-	size: number;
-	/** The remaining capacity in the queue. */
-	remaining: number;
 }
 
 const PREFIX = "leaky_bucket";
