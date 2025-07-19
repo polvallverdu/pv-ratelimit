@@ -1,6 +1,6 @@
 import type {
-	ConsumeResult,
 	TokenBucketRateLimiter,
+	TokenConsumeResult,
 	TokenCountResult,
 } from "../algorithms/tokenBucket";
 
@@ -9,7 +9,10 @@ import type {
  * This is useful for testing purposes, or when you want to disable rate limiting.
  */
 export class DummyTokenBucket implements TokenBucketRateLimiter {
-	async consume(_key: string, _tokens: number = 1): Promise<ConsumeResult> {
+	async consume(
+		_key: string,
+		_tokens: number = 1,
+	): Promise<TokenConsumeResult> {
 		return {
 			success: true,
 			remainingTokens: -1,

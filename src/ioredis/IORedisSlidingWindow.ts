@@ -1,6 +1,9 @@
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
-import type { SlidingWindowRateLimiter } from "../algorithms/slidingWindow";
+import type {
+	SlidingWindowRateLimiter,
+	SlidingWindowResult,
+} from "../algorithms/slidingWindow";
 
 declare module "ioredis" {
 	interface Redis {
@@ -19,13 +22,6 @@ declare module "ioredis" {
 			currentTime: number,
 		): Promise<number>;
 	}
-}
-
-export interface SlidingWindowResult {
-	/** Indicates whether the request was successful. */
-	success: boolean;
-	/** The approximate number of requests remaining. */
-	remaining: number;
 }
 
 const PREFIX = "sliding_window";

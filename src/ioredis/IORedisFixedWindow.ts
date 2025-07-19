@@ -1,6 +1,9 @@
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
-import type { FixedWindowRateLimiter } from "../algorithms/fixedWindow";
+import type {
+	FixedWindowRateLimiter,
+	FixedWindowResult,
+} from "../algorithms/fixedWindow";
 
 declare module "ioredis" {
 	interface Redis {
@@ -11,13 +14,6 @@ declare module "ioredis" {
 		): Promise<[number, number]>;
 		getFixedWindow(key: string, limit: number): Promise<number>;
 	}
-}
-
-export interface FixedWindowResult {
-	/** Indicates whether the request was successful. */
-	success: boolean;
-	/** The number of requests remaining in the current window. */
-	remaining: number;
 }
 
 const PREFIX = "fixed_window";

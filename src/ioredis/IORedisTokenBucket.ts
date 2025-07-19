@@ -1,6 +1,10 @@
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
-import type { TokenBucketRateLimiter } from "../algorithms/tokenBucket";
+import type {
+	TokenBucketRateLimiter,
+	TokenConsumeResult,
+	TokenCountResult,
+} from "../algorithms/tokenBucket";
 
 declare module "ioredis" {
 	interface Redis {
@@ -20,22 +24,6 @@ declare module "ioredis" {
 			currentTime: number,
 		): Promise<[number, number]>; // [remaining_tokens, next_refill_at]
 	}
-}
-
-export interface ConsumeResult {
-	/** Indicates whether the tokens were successfully consumed. */
-	success: boolean;
-	/** The number of tokens remaining in the bucket after this operation. */
-	remainingTokens: number;
-	/** A Unix timestamp (in seconds) indicating when the next refill will occur. */
-	nextRefillAt: number;
-}
-
-export interface TokenCountResult {
-	/** The number of tokens currently in the bucket. */
-	remainingTokens: number;
-	/** A Unix timestamp (in seconds) indicating when the next refill will occur. */
-	nextRefillAt: number;
 }
 
 const PREFIX = "token_bucket";
@@ -260,7 +248,7 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 	public async consume(
 		key: string,
 		tokens: number = 1,
-	): Promise<ConsumeResult> {
+	): Promise<TokenConsumeResult> {
 		const redisKey = `${PREFIX}:${key}`;
 
 		const [successFlag, remaining, nextRefill] = await this.redis.consumeToken(

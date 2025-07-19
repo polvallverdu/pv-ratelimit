@@ -1,21 +1,3 @@
-declare module "ioredis" {
-	interface Redis {
-		consumeSlidingLog(
-			key: string,
-			limit: number,
-			interval: number,
-			currentTime: number,
-			requestId: string,
-		): Promise<[number, number]>;
-		getSlidingLog(
-			key: string,
-			limit: number,
-			interval: number,
-			currentTime: number,
-		): Promise<number>;
-	}
-}
-
 export interface SlidingLogResult {
 	/** Indicates whether the request was successful. */
 	success: boolean;
