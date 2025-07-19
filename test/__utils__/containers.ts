@@ -6,9 +6,7 @@ export function useRedisContainer() {
   let redisContainer: StartedRedisContainer | undefined;
 
   beforeAll(async () => {
-    redisContainer = await new RedisContainer("redis:latest")
-      .withExposedPorts({ container: 6379, host: 6379 })
-      .start();
+    redisContainer = await new RedisContainer("redis:latest").start();
   });
 
   afterAll(async () => {
