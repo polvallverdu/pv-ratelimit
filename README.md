@@ -10,7 +10,7 @@ A comprehensive, type-safe TypeScript library providing multiple rate limiting a
 ## ✨ Features
 
 - 🔄 **6 Rate Limiting Algorithms** - Fixed Window, Sliding Window, Sliding Log, Token Bucket, Leaky Bucket, and Throttling
-- 🗄️ **Multiple Backends** - In-memory (dummy) and Redis implementations
+- 🗄️ **Multiple Backends** - Dummy, In-memory, and Redis implementations
 - 📝 **Type-safe** - Full TypeScript support with strict typing
 - ⚡ **High performance** - Optimized Redis Lua scripts for atomic operations and Redis Cluster support
 - 🧪 **Well tested** - Comprehensive test coverage for all algorithms
@@ -58,6 +58,32 @@ const tokenLimiter = new DummyTokenBucket();
 
 const result = await rateLimiter.consume("user:123");
 console.log(result.success); // true (dummy always succeeds)
+```
+
+### In-Memory (Development/Testing)
+
+```typescript
+import {
+  MemoryFixedWindow,
+  MemorySlidingLog,
+  MemoryTokenBucket,
+} from "pv-ratelimit/memory";
+
+// Fixed window: 100 requests per hour
+const fixedWindowLimiter = new MemoryFixedWindow(100, 3600);
+
+// Sliding log: 50 requests per minute (more accurate)
+const slidingLogLimiter = new MemorySlidingLog(50, 60);
+
+// Token bucket: 20 tokens, refill 5 tokens every 30 seconds
+const tokenBucketLimiter = new MemoryTokenBucket(20, 5, 30);
+
+const result = await fixedWindowLimiter.consume("user:123");
+if (result.success) {
+  console.log(`Request allowed. ${result.remaining} requests remaining.`);
+} else {
+  console.log("Rate limit exceeded!");
+}
 ```
 
 ### Redis-Backed (Production)
@@ -356,6 +382,33 @@ import {
 const limiter = new DummyFixedWindow();
 ```
 
+### In-Memory Implementation
+
+Great for development, testing, and single-instance applications:
+
+```typescript
+import {
+  MemoryFixedWindow,
+  MemoryTokenBucket,
+  MemorySlidingWindow,
+  MemorySlidingLog,
+  MemoryLeakyBucket,
+  MemoryThrottling,
+} from "pv-ratelimit/memory";
+
+// Real rate limiting with in-memory storage
+const limiter = new MemoryFixedWindow(100, 3600); // 100 requests per hour
+const result = await limiter.consume("user:123");
+```
+
+**Features:**
+
+- Real rate limiting behavior (not dummy)
+- No external dependencies
+- Perfect for development and testing
+- Suitable for single-instance applications
+- Automatic cleanup of expired data
+
 ### Redis Implementation
 
 Production-ready with atomic Lua scripts:
@@ -390,6 +443,10 @@ const rateLimiter = new IORedisFixedWindowRateLimiter(
   1000,
   Duration.fromHours(1)
 );
+
+// For development/testing, you can use in-memory implementation:
+// import { MemoryFixedWindow } from "pv-ratelimit/memory";
+// const rateLimiter = new MemoryFixedWindow(1000, 3600);
 
 app.use(async (c, next) => {
   const apiKey = c.req.header("x-api-key");
@@ -541,14 +598,7 @@ bun install
 
 ```bash
 # Run tests
-bun test
-
-# Run tests with coverage
-bun test:coverage
-
-# Run specific test suite
-bun test dummy/
-bun test ioredis/
+bun run test
 ```
 
 ### Building
