@@ -2,25 +2,25 @@ import { randomUUID } from "node:crypto";
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
 import type {
-  LeakyBucketRateLimiter,
-  LeakyBucketResult,
-  LeakyBucketState,
+	LeakyBucketRateLimiter,
+	LeakyBucketResult,
+	LeakyBucketState,
 } from "../algorithms/leakyBucket";
 import { getKey } from "../utils/key";
 
 declare module "ioredis" {
-  interface Redis {
-    consumeLeakyBucket(
-      key: string,
-      capacity: number,
-      requestId: string,
-      interval: number
-    ): Promise<[number, number]>;
-    getStateLeakyBucket(
-      key: string,
-      capacity: number
-    ): Promise<[number, number]>;
-  }
+	interface Redis {
+		consumeLeakyBucket(
+			key: string,
+			capacity: number,
+			requestId: string,
+			interval: number,
+		): Promise<[number, number]>;
+		getStateLeakyBucket(
+			key: string,
+			capacity: number,
+		): Promise<[number, number]>;
+	}
 }
 
 const PREFIX = "pvrl-leaky-bucket";
@@ -66,33 +66,33 @@ const PREFIX = "pvrl-leaky-bucket";
  * ```
  */
 export class IORedisLeakyBucketRateLimiter implements LeakyBucketRateLimiter {
-  private redis: Redis;
-  private name: string;
-  private capacity: number;
-  /**
-   * In seconds
-   */
-  private interval: number;
+	private redis: Redis;
+	private name: string;
+	private capacity: number;
+	/**
+	 * In seconds
+	 */
+	private interval: number;
 
-  constructor(
-    redisClient: Redis,
-    name: string,
-    capacity: number,
-    interval: Duration
-  ) {
-    const intervalSeconds = interval.seconds;
-    if (capacity <= 0 || intervalSeconds <= 0) {
-      throw new Error("Capacity and interval must be positive values.");
-    }
+	constructor(
+		redisClient: Redis,
+		name: string,
+		capacity: number,
+		interval: Duration,
+	) {
+		const intervalSeconds = interval.seconds;
+		if (capacity <= 0 || intervalSeconds <= 0) {
+			throw new Error("Capacity and interval must be positive values.");
+		}
 
-    this.redis = redisClient;
-    this.name = name;
-    this.capacity = capacity;
-    this.interval = intervalSeconds;
+		this.redis = redisClient;
+		this.name = name;
+		this.capacity = capacity;
+		this.interval = intervalSeconds;
 
-    this.redis.defineCommand("consumeLeakyBucket", {
-      numberOfKeys: 1,
-      lua: `
+		this.redis.defineCommand("consumeLeakyBucket", {
+			numberOfKeys: 1,
+			lua: `
         local key = KEYS[1]
         local capacity = tonumber(ARGV[1])
         local request_id = ARGV[2]
@@ -108,11 +108,11 @@ export class IORedisLeakyBucketRateLimiter implements LeakyBucketRateLimiter {
             return {0, 0}
         end
       `,
-    });
+		});
 
-    this.redis.defineCommand("getStateLeakyBucket", {
-      numberOfKeys: 1,
-      lua: `
+		this.redis.defineCommand("getStateLeakyBucket", {
+			numberOfKeys: 1,
+			lua: `
         local key = KEYS[1]
         local capacity = tonumber(ARGV[1])
 
@@ -123,54 +123,54 @@ export class IORedisLeakyBucketRateLimiter implements LeakyBucketRateLimiter {
         end
         return {len, remaining}
       `,
-    });
-  }
+		});
+	}
 
-  private getKey(key: string): string {
-    return getKey(PREFIX, this.name, key);
-  }
+	private getKey(key: string): string {
+		return getKey(PREFIX, this.name, key);
+	}
 
-  /**
-   * Attempts to add a request to the bucket's queue.
-   * @param key A unique identifier for the client.
-   * @param uniqueRequestId An optional unique ID for the request.
-   * @returns A promise resolving to the result of the operation.
-   */
-  public async consume(
-    key: string,
-    uniqueRequestId?: string
-  ): Promise<LeakyBucketResult> {
-    const redisKey = this.getKey(key);
-    const requestId = uniqueRequestId || randomUUID();
+	/**
+	 * Attempts to add a request to the bucket's queue.
+	 * @param key A unique identifier for the client.
+	 * @param uniqueRequestId An optional unique ID for the request.
+	 * @returns A promise resolving to the result of the operation.
+	 */
+	public async consume(
+		key: string,
+		uniqueRequestId?: string,
+	): Promise<LeakyBucketResult> {
+		const redisKey = this.getKey(key);
+		const requestId = uniqueRequestId || randomUUID();
 
-    const [success, remaining] = await this.redis.consumeLeakyBucket(
-      redisKey,
-      this.capacity,
-      requestId,
-      this.interval
-    );
+		const [success, remaining] = await this.redis.consumeLeakyBucket(
+			redisKey,
+			this.capacity,
+			requestId,
+			this.interval,
+		);
 
-    return {
-      success: success === 1,
-      remaining: remaining,
-    };
-  }
+		return {
+			success: success === 1,
+			remaining: remaining,
+		};
+	}
 
-  /**
-   * Retrieves the current state of the bucket (queue size and remaining capacity).
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the bucket's state.
-   */
-  public async getState(key: string): Promise<LeakyBucketState> {
-    const redisKey = this.getKey(key);
-    const [size, remaining] = await this.redis.getStateLeakyBucket(
-      redisKey,
-      this.capacity
-    );
-    return { size, remaining };
-  }
+	/**
+	 * Retrieves the current state of the bucket (queue size and remaining capacity).
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the bucket's state.
+	 */
+	public async getState(key: string): Promise<LeakyBucketState> {
+		const redisKey = this.getKey(key);
+		const [size, remaining] = await this.redis.getStateLeakyBucket(
+			redisKey,
+			this.capacity,
+		);
+		return { size, remaining };
+	}
 
-  public getCapacity(): number {
-    return this.capacity;
-  }
+	public getCapacity(): number {
+		return this.capacity;
+	}
 }

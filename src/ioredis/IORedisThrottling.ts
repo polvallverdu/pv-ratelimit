@@ -1,24 +1,24 @@
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
 import type {
-  ThrottlingRateLimiter,
-  ThrottlingResult,
+	ThrottlingRateLimiter,
+	ThrottlingResult,
 } from "../algorithms/throttling";
 import { getKey } from "../utils/key";
 
 declare module "ioredis" {
-  interface Redis {
-    throttleRequest(
-      key: string,
-      minInterval: number,
-      currentTime: number
-    ): Promise<[number, number, number]>; // [success_flag, wait_time, next_allowed_at]
-    getThrottleStatus(
-      key: string,
-      minInterval: number,
-      currentTime: number
-    ): Promise<[number, number, number]>; // [success_flag, wait_time, next_allowed_at]
-  }
+	interface Redis {
+		throttleRequest(
+			key: string,
+			minInterval: number,
+			currentTime: number,
+		): Promise<[number, number, number]>; // [success_flag, wait_time, next_allowed_at]
+		getThrottleStatus(
+			key: string,
+			minInterval: number,
+			currentTime: number,
+		): Promise<[number, number, number]>; // [success_flag, wait_time, next_allowed_at]
+	}
 }
 
 const PREFIX = "pvrl-throttling";
@@ -79,26 +79,26 @@ const PREFIX = "pvrl-throttling";
  * ```
  */
 export class IORedisThrottlingRateLimiter implements ThrottlingRateLimiter {
-  private redis: Redis;
-  private name: string;
-  /**
-   * In milliseconds
-   */
-  private minInterval: number;
+	private redis: Redis;
+	private name: string;
+	/**
+	 * In milliseconds
+	 */
+	private minInterval: number;
 
-  constructor(redisClient: Redis, name: string, minInterval: Duration) {
-    const intervalMs = minInterval.milliseconds;
-    if (intervalMs <= 0) {
-      throw new Error("Minimum interval must be a positive value.");
-    }
+	constructor(redisClient: Redis, name: string, minInterval: Duration) {
+		const intervalMs = minInterval.milliseconds;
+		if (intervalMs <= 0) {
+			throw new Error("Minimum interval must be a positive value.");
+		}
 
-    this.redis = redisClient;
-    this.name = name;
-    this.minInterval = intervalMs;
+		this.redis = redisClient;
+		this.name = name;
+		this.minInterval = intervalMs;
 
-    this.redis.defineCommand("throttleRequest", {
-      numberOfKeys: 1,
-      lua: `
+		this.redis.defineCommand("throttleRequest", {
+			numberOfKeys: 1,
+			lua: `
         local key = KEYS[1]
         local min_interval = tonumber(ARGV[1])
         local current_time = tonumber(ARGV[2])
@@ -123,11 +123,11 @@ export class IORedisThrottlingRateLimiter implements ThrottlingRateLimiter {
           return {1, wait_time, next_allowed_at}
         end
       `,
-    });
+		});
 
-    this.redis.defineCommand("getThrottleStatus", {
-      numberOfKeys: 1,
-      lua: `
+		this.redis.defineCommand("getThrottleStatus", {
+			numberOfKeys: 1,
+			lua: `
         local key = KEYS[1]
         local min_interval = tonumber(ARGV[1])
         local current_time = tonumber(ARGV[2])
@@ -150,70 +150,70 @@ export class IORedisThrottlingRateLimiter implements ThrottlingRateLimiter {
           return {1, wait_time, next_allowed_at}
         end
       `,
-    });
-  }
+		});
+	}
 
-  private getKey(key: string): string {
-    return getKey(PREFIX, this.name, key);
-  }
+	private getKey(key: string): string {
+		return getKey(PREFIX, this.name, key);
+	}
 
-  /**
-   * Attempts to process a request, enforcing the minimum delay between requests.
-   * @param key A unique identifier for the client (e.g., user ID, IP address).
-   * @returns A promise that resolves to an object indicating whether the request
-   *          can proceed immediately and how long to wait if throttled.
-   */
-  public async throttle(key: string): Promise<ThrottlingResult> {
-    const redisKey = this.getKey(key);
-    const currentTime = Date.now();
+	/**
+	 * Attempts to process a request, enforcing the minimum delay between requests.
+	 * @param key A unique identifier for the client (e.g., user ID, IP address).
+	 * @returns A promise that resolves to an object indicating whether the request
+	 *          can proceed immediately and how long to wait if throttled.
+	 */
+	public async throttle(key: string): Promise<ThrottlingResult> {
+		const redisKey = this.getKey(key);
+		const currentTime = Date.now();
 
-    const [success, waitTime, nextAllowedAt] = await this.redis.throttleRequest(
-      redisKey,
-      this.minInterval,
-      currentTime
-    );
+		const [success, waitTime, nextAllowedAt] = await this.redis.throttleRequest(
+			redisKey,
+			this.minInterval,
+			currentTime,
+		);
 
-    return {
-      success: success === 1,
-      waitTime: waitTime,
-      nextAllowedAt: nextAllowedAt,
-    };
-  }
+		return {
+			success: success === 1,
+			waitTime: waitTime,
+			nextAllowedAt: nextAllowedAt,
+		};
+	}
 
-  /**
-   * Gets the current throttling status for a key without updating the timestamp.
-   * @param key A unique identifier for the client.
-   * @returns A promise that resolves to the throttling result for the current state.
-   */
-  public async getStatus(key: string): Promise<ThrottlingResult> {
-    const redisKey = this.getKey(key);
-    const currentTime = Date.now();
+	/**
+	 * Gets the current throttling status for a key without updating the timestamp.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise that resolves to the throttling result for the current state.
+	 */
+	public async getStatus(key: string): Promise<ThrottlingResult> {
+		const redisKey = this.getKey(key);
+		const currentTime = Date.now();
 
-    const [success, waitTime, nextAllowedAt] =
-      await this.redis.getThrottleStatus(
-        redisKey,
-        this.minInterval,
-        currentTime
-      );
+		const [success, waitTime, nextAllowedAt] =
+			await this.redis.getThrottleStatus(
+				redisKey,
+				this.minInterval,
+				currentTime,
+			);
 
-    return {
-      success: success === 1,
-      waitTime: waitTime,
-      nextAllowedAt: nextAllowedAt,
-    };
-  }
+		return {
+			success: success === 1,
+			waitTime: waitTime,
+			nextAllowedAt: nextAllowedAt,
+		};
+	}
 
-  /**
-   * Returns the minimum delay between requests in milliseconds.
-   */
-  public getMinInterval(): number {
-    return this.minInterval;
-  }
+	/**
+	 * Returns the minimum delay between requests in milliseconds.
+	 */
+	public getMinInterval(): number {
+		return this.minInterval;
+	}
 
-  /**
-   * Returns the minimum delay between requests in seconds.
-   */
-  public getMinIntervalSeconds(): number {
-    return Math.ceil(this.minInterval / 1000);
-  }
+	/**
+	 * Returns the minimum delay between requests in seconds.
+	 */
+	public getMinIntervalSeconds(): number {
+		return Math.ceil(this.minInterval / 1000);
+	}
 }
