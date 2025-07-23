@@ -1,22 +1,23 @@
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
 import type {
-	FixedWindowRateLimiter,
-	FixedWindowResult,
+  FixedWindowRateLimiter,
+  FixedWindowResult,
 } from "../algorithms/fixedWindow";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
-	interface Redis {
-		consumeFixedWindow(
-			key: string,
-			limit: number,
-			interval: number,
-		): Promise<[number, number]>;
-		getFixedWindow(key: string, limit: number): Promise<number>;
-	}
+  interface Redis {
+    consumeFixedWindow(
+      key: string,
+      limit: number,
+      interval: number
+    ): Promise<[number, number]>;
+    getFixedWindow(key: string, limit: number): Promise<number>;
+  }
 }
 
-const PREFIX = "fixed_window";
+const PREFIX = "pvrl-fixed-window";
 
 /**
  * A Redis-backed fixed window rate limiter.
@@ -69,26 +70,33 @@ const PREFIX = "fixed_window";
  * ```
  */
 export class IORedisFixedWindowRateLimiter implements FixedWindowRateLimiter {
-	private redis: Redis;
-	private limit: number;
-	/**
-	 * In seconds
-	 */
-	private interval: number;
+  private redis: Redis;
+  private name: string;
+  private limit: number;
+  /**
+   * In seconds
+   */
+  private interval: number;
 
-	constructor(redisClient: Redis, limit: number, interval: Duration) {
-		const intervalSeconds = interval.seconds;
-		if (limit <= 0 || intervalSeconds <= 0) {
-			throw new Error("Limit and interval must be positive values.");
-		}
+  constructor(
+    redisClient: Redis,
+    name: string,
+    limit: number,
+    interval: Duration
+  ) {
+    const intervalSeconds = interval.seconds;
+    if (limit <= 0 || intervalSeconds <= 0) {
+      throw new Error("Limit and interval must be positive values.");
+    }
 
-		this.redis = redisClient;
-		this.limit = limit;
-		this.interval = intervalSeconds;
+    this.redis = redisClient;
+    this.name = name;
+    this.limit = limit;
+    this.interval = intervalSeconds;
 
-		this.redis.defineCommand("consumeFixedWindow", {
-			numberOfKeys: 1,
-			lua: `
+    this.redis.defineCommand("consumeFixedWindow", {
+      numberOfKeys: 1,
+      lua: `
         local key = KEYS[1]
         local limit = tonumber(ARGV[1])
         local interval = tonumber(ARGV[2])
@@ -110,11 +118,11 @@ export class IORedisFixedWindowRateLimiter implements FixedWindowRateLimiter {
           return {1, remaining}
         end
       `,
-		});
+    });
 
-		this.redis.defineCommand("getFixedWindow", {
-			numberOfKeys: 1,
-			lua: `
+    this.redis.defineCommand("getFixedWindow", {
+      numberOfKeys: 1,
+      lua: `
           local key = KEYS[1]
           local limit = tonumber(ARGV[1])
 
@@ -131,55 +139,55 @@ export class IORedisFixedWindowRateLimiter implements FixedWindowRateLimiter {
 
           return remaining
         `,
-		});
-	}
+    });
+  }
 
-	private getKey(key: string): string {
-		const window = Math.floor(Date.now() / 1000 / this.interval);
-		return `${PREFIX}:${key}:${window}`;
-	}
+  private getKey(key: string): string {
+    const window = Math.floor(Date.now() / 1000 / this.interval);
+    return `${getKey(PREFIX, this.name, key)}:${String(window)}`;
+  }
 
-	/**
-	 * Attempts to consume a token for a given key.
-	 * @param key A unique identifier for the client (e.g., user ID, IP address).
-	 * @returns A promise that resolves to an object indicating success and remaining tokens.
-	 */
-	public async consume(key: string): Promise<FixedWindowResult> {
-		const redisKey = this.getKey(key);
+  /**
+   * Attempts to consume a token for a given key.
+   * @param key A unique identifier for the client (e.g., user ID, IP address).
+   * @returns A promise that resolves to an object indicating success and remaining tokens.
+   */
+  public async consume(key: string): Promise<FixedWindowResult> {
+    const redisKey = this.getKey(key);
 
-		const [success, remaining] = await this.redis.consumeFixedWindow(
-			redisKey,
-			this.limit,
-			this.interval,
-		);
+    const [success, remaining] = await this.redis.consumeFixedWindow(
+      redisKey,
+      this.limit,
+      this.interval
+    );
 
-		return {
-			success: success === 1,
-			remaining: remaining,
-		};
-	}
+    return {
+      success: success === 1,
+      remaining: remaining,
+    };
+  }
 
-	/**
-	 * Retrieves the number of remaining requests for a given key in the current window.
-	 * @param key A unique identifier for the client.
-	 * @returns A promise that resolves to the number of remaining requests.
-	 */
-	public async getRemaining(key: string): Promise<number> {
-		const redisKey = this.getKey(key);
-		return this.redis.getFixedWindow(redisKey, this.limit);
-	}
+  /**
+   * Retrieves the number of remaining requests for a given key in the current window.
+   * @param key A unique identifier for the client.
+   * @returns A promise that resolves to the number of remaining requests.
+   */
+  public async getRemaining(key: string): Promise<number> {
+    const redisKey = this.getKey(key);
+    return this.redis.getFixedWindow(redisKey, this.limit);
+  }
 
-	/**
-	 * Returns the maximum number of requests allowed in a window.
-	 */
-	public getLimit(): number {
-		return this.limit;
-	}
+  /**
+   * Returns the maximum number of requests allowed in a window.
+   */
+  public getLimit(): number {
+    return this.limit;
+  }
 
-	/**
-	 * Returns the duration of the window in seconds.
-	 */
-	public getInterval(): number {
-		return this.interval;
-	}
+  /**
+   * Returns the duration of the window in seconds.
+   */
+  public getInterval(): number {
+    return this.interval;
+  }
 }

@@ -1,30 +1,31 @@
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
 import type {
-	SlidingWindowRateLimiter,
-	SlidingWindowResult,
+  SlidingWindowRateLimiter,
+  SlidingWindowResult,
 } from "../algorithms/slidingWindow";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
-	interface Redis {
-		consumeSlidingWindow(
-			currentKey: string,
-			previousKey: string,
-			limit: number,
-			interval: number,
-			currentTime: number,
-		): Promise<[number, number]>;
-		getSlidingWindow(
-			currentKey: string,
-			previousKey: string,
-			limit: number,
-			interval: number,
-			currentTime: number,
-		): Promise<number>;
-	}
+  interface Redis {
+    consumeSlidingWindow(
+      currentKey: string,
+      previousKey: string,
+      limit: number,
+      interval: number,
+      currentTime: number
+    ): Promise<[number, number]>;
+    getSlidingWindow(
+      currentKey: string,
+      previousKey: string,
+      limit: number,
+      interval: number,
+      currentTime: number
+    ): Promise<number>;
+  }
 }
 
-const PREFIX = "sliding_window";
+const PREFIX = "pvrl-sliding-window";
 
 /**
  * A Redis-backed sliding window counter rate limiter.
@@ -70,26 +71,33 @@ const PREFIX = "sliding_window";
  * ```
  */
 export class IORedisSlidingWindowRateLimiter
-	implements SlidingWindowRateLimiter
+  implements SlidingWindowRateLimiter
 {
-	private redis: Redis;
-	private limit: number;
-	/**
-	 * In seconds
-	 */
-	private interval: number;
+  private redis: Redis;
+  private name: string;
+  private limit: number;
+  /**
+   * In seconds
+   */
+  private interval: number;
 
-	constructor(redisClient: Redis, limit: number, interval: Duration) {
-		const intervalSeconds = interval.seconds;
-		if (limit <= 0 || intervalSeconds <= 0) {
-			throw new Error("Limit and interval must be positive values.");
-		}
+  constructor(
+    redisClient: Redis,
+    name: string,
+    limit: number,
+    interval: Duration
+  ) {
+    const intervalSeconds = interval.seconds;
+    if (limit <= 0 || intervalSeconds <= 0) {
+      throw new Error("Limit and interval must be positive values.");
+    }
 
-		this.redis = redisClient;
-		this.limit = limit;
-		this.interval = intervalSeconds;
+    this.redis = redisClient;
+    this.name = name;
+    this.limit = limit;
+    this.interval = intervalSeconds;
 
-		const script = `
+    const script = `
       local current_key = KEYS[1]
       local previous_key = KEYS[2]
       local limit = tonumber(ARGV[1])
@@ -122,11 +130,11 @@ export class IORedisSlidingWindowRateLimiter
       end
     `;
 
-		this.redis.defineCommand("consumeSlidingWindow", {
-			numberOfKeys: 2,
-			lua:
-				script +
-				`
+    this.redis.defineCommand("consumeSlidingWindow", {
+      numberOfKeys: 2,
+      lua:
+        script +
+        `
         local new_count = redis.call('INCR', current_key)
         if new_count == 1 then
           redis.call('EXPIRE', current_key, interval * 2)
@@ -136,75 +144,75 @@ export class IORedisSlidingWindowRateLimiter
         if remaining < 0 then remaining = 0 end
         return {1, remaining}
       `,
-		});
+    });
 
-		this.redis.defineCommand("getSlidingWindow", {
-			numberOfKeys: 2,
-			lua:
-				script +
-				`
+    this.redis.defineCommand("getSlidingWindow", {
+      numberOfKeys: 2,
+      lua:
+        script +
+        `
         if remaining < 0 then remaining = 0 end
         return remaining
       `,
-		});
-	}
+    });
+  }
 
-	private getKeys(key: string): [string, string] {
-		const now = Date.now() / 1000;
-		const currentWindow = Math.floor(now / this.interval);
-		const previousWindow = currentWindow - 1;
-		const currentKey = `${PREFIX}:${key}:${currentWindow}`;
-		const previousKey = `${PREFIX}:${key}:${previousWindow}`;
-		return [currentKey, previousKey];
-	}
+  private getKeys(key: string): [string, string] {
+    const now = Date.now() / 1000;
+    const currentWindow = Math.floor(now / this.interval);
+    const previousWindow = currentWindow - 1;
+    const currentKey = getKey(PREFIX, this.name, key, String(currentWindow));
+    const previousKey = getKey(PREFIX, this.name, key, String(previousWindow));
+    return [currentKey, previousKey];
+  }
 
-	/**
-	 * Attempts to consume a token for a given key.
-	 * @param key A unique identifier for the client.
-	 * @returns A promise resolving to the result of the operation.
-	 */
-	public async consume(key: string): Promise<SlidingWindowResult> {
-		const [currentKey, previousKey] = this.getKeys(key);
-		const now = Date.now() / 1000;
+  /**
+   * Attempts to consume a token for a given key.
+   * @param key A unique identifier for the client.
+   * @returns A promise resolving to the result of the operation.
+   */
+  public async consume(key: string): Promise<SlidingWindowResult> {
+    const [currentKey, previousKey] = this.getKeys(key);
+    const now = Date.now() / 1000;
 
-		const [success, remaining] = await this.redis.consumeSlidingWindow(
-			currentKey,
-			previousKey,
-			this.limit,
-			this.interval,
-			now,
-		);
+    const [success, remaining] = await this.redis.consumeSlidingWindow(
+      currentKey,
+      previousKey,
+      this.limit,
+      this.interval,
+      now
+    );
 
-		return {
-			success: success === 1,
-			remaining: Math.floor(remaining),
-		};
-	}
+    return {
+      success: success === 1,
+      remaining: Math.floor(remaining),
+    };
+  }
 
-	/**
-	 * Retrieves the approximate number of remaining requests for a given key.
-	 * @param key A unique identifier for the client.
-	 * @returns A promise resolving to the number of remaining requests.
-	 */
-	public async getRemaining(key: string): Promise<number> {
-		const [currentKey, previousKey] = this.getKeys(key);
-		const now = Date.now() / 1000;
+  /**
+   * Retrieves the approximate number of remaining requests for a given key.
+   * @param key A unique identifier for the client.
+   * @returns A promise resolving to the number of remaining requests.
+   */
+  public async getRemaining(key: string): Promise<number> {
+    const [currentKey, previousKey] = this.getKeys(key);
+    const now = Date.now() / 1000;
 
-		const remaining = await this.redis.getSlidingWindow(
-			currentKey,
-			previousKey,
-			this.limit,
-			this.interval,
-			now,
-		);
-		return Math.floor(remaining);
-	}
+    const remaining = await this.redis.getSlidingWindow(
+      currentKey,
+      previousKey,
+      this.limit,
+      this.interval,
+      now
+    );
+    return Math.floor(remaining);
+  }
 
-	public getLimit(): number {
-		return this.limit;
-	}
+  public getLimit(): number {
+    return this.limit;
+  }
 
-	public getInterval(): number {
-		return this.interval;
-	}
+  public getInterval(): number {
+    return this.interval;
+  }
 }
