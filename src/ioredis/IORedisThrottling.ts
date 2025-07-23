@@ -4,6 +4,7 @@ import type {
 	ThrottlingRateLimiter,
 	ThrottlingResult,
 } from "../algorithms/throttling";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
 	interface Redis {
@@ -20,7 +21,7 @@ declare module "ioredis" {
 	}
 }
 
-const PREFIX = "throttling";
+const PREFIX = "pvrl-throttling";
 
 /**
  * A Redis-backed throttling rate limiter.
@@ -79,18 +80,20 @@ const PREFIX = "throttling";
  */
 export class IORedisThrottlingRateLimiter implements ThrottlingRateLimiter {
 	private redis: Redis;
+	private name: string;
 	/**
 	 * In milliseconds
 	 */
 	private minInterval: number;
 
-	constructor(redisClient: Redis, minInterval: Duration) {
+	constructor(redisClient: Redis, name: string, minInterval: Duration) {
 		const intervalMs = minInterval.milliseconds;
 		if (intervalMs <= 0) {
 			throw new Error("Minimum interval must be a positive value.");
 		}
 
 		this.redis = redisClient;
+		this.name = name;
 		this.minInterval = intervalMs;
 
 		this.redis.defineCommand("throttleRequest", {
@@ -151,7 +154,7 @@ export class IORedisThrottlingRateLimiter implements ThrottlingRateLimiter {
 	}
 
 	private getKey(key: string): string {
-		return `${PREFIX}:${key}`;
+		return getKey(PREFIX, this.name, key);
 	}
 
 	/**

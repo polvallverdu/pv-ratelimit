@@ -17,6 +17,7 @@ describe("IORedisThrottlingRateLimiter", () => {
 
 		throttler = new IORedisThrottlingRateLimiter(
 			redisClient,
+			"test-th",
 			Duration.ofSeconds(1), // 1 second minimum interval
 		);
 	});
@@ -29,6 +30,7 @@ describe("IORedisThrottlingRateLimiter", () => {
 		it("should create a throttler with valid parameters", () => {
 			const throttler = new IORedisThrottlingRateLimiter(
 				redisClient,
+				"test-th",
 				Duration.ofSeconds(1),
 			);
 			expect(throttler.getMinInterval()).toBe(1000);
@@ -37,13 +39,18 @@ describe("IORedisThrottlingRateLimiter", () => {
 
 		it("should throw error for zero interval", () => {
 			expect(() => {
-				new IORedisThrottlingRateLimiter(redisClient, Duration.ofSeconds(0));
+				new IORedisThrottlingRateLimiter(
+					redisClient,
+					"test-th",
+					Duration.ofSeconds(0),
+				);
 			}).toThrow("Minimum interval must be a positive value.");
 		});
 
 		it("should handle millisecond intervals correctly", () => {
 			const throttler = new IORedisThrottlingRateLimiter(
 				redisClient,
+				"test-th",
 				Duration.ofMilliseconds(500),
 			);
 			expect(throttler.getMinInterval()).toBe(500);
@@ -174,6 +181,7 @@ describe("IORedisThrottlingRateLimiter", () => {
 		it("should handle different intervals correctly", () => {
 			const throttler2 = new IORedisThrottlingRateLimiter(
 				redisClient,
+				"test-th",
 				Duration.ofMilliseconds(2500),
 			);
 			expect(throttler2.getMinInterval()).toBe(2500);
@@ -188,6 +196,7 @@ describe("IORedisThrottlingRateLimiter", () => {
 		it("should round up partial seconds", () => {
 			const throttler2 = new IORedisThrottlingRateLimiter(
 				redisClient,
+				"test-th",
 				Duration.ofMilliseconds(1500),
 			);
 			expect(throttler2.getMinIntervalSeconds()).toBe(2);
@@ -287,6 +296,7 @@ describe("IORedisThrottlingRateLimiter", () => {
 		it("should handle very short intervals", async () => {
 			const shortThrottler = new IORedisThrottlingRateLimiter(
 				redisClient,
+				"test-th",
 				Duration.ofMilliseconds(10),
 			);
 

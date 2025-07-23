@@ -5,6 +5,7 @@ import type {
 	SlidingLogRateLimiter,
 	SlidingLogResult,
 } from "../algorithms/slidingLog";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
 	interface Redis {
@@ -24,7 +25,7 @@ declare module "ioredis" {
 	}
 }
 
-const PREFIX = "sliding_log";
+const PREFIX = "pvrl-sliding-log";
 
 /**
  * A Redis-backed sliding log rate limiter.
@@ -74,19 +75,26 @@ const PREFIX = "sliding_log";
  */
 export class IORedisSlidingLogRateLimiter implements SlidingLogRateLimiter {
 	private redis: Redis;
+	private name: string;
 	private limit: number;
 	/**
 	 * In seconds
 	 */
 	private interval: number;
 
-	constructor(redisClient: Redis, limit: number, interval: Duration) {
+	constructor(
+		redisClient: Redis,
+		name: string,
+		limit: number,
+		interval: Duration,
+	) {
 		const intervalSeconds = interval.seconds;
 		if (limit <= 0 || intervalSeconds <= 0) {
 			throw new Error("Limit and interval must be positive values.");
 		}
 
 		this.redis = redisClient;
+		this.name = name;
 		this.limit = limit;
 		this.interval = intervalSeconds;
 
@@ -141,7 +149,7 @@ export class IORedisSlidingLogRateLimiter implements SlidingLogRateLimiter {
 	}
 
 	private getKey(key: string): string {
-		return `${PREFIX}:${key}`;
+		return getKey(PREFIX, this.name, key);
 	}
 
 	/**

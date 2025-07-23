@@ -4,6 +4,7 @@ import type {
 	SlidingWindowRateLimiter,
 	SlidingWindowResult,
 } from "../algorithms/slidingWindow";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
 	interface Redis {
@@ -24,7 +25,7 @@ declare module "ioredis" {
 	}
 }
 
-const PREFIX = "sliding_window";
+const PREFIX = "pvrl-sliding-window";
 
 /**
  * A Redis-backed sliding window counter rate limiter.
@@ -73,19 +74,26 @@ export class IORedisSlidingWindowRateLimiter
 	implements SlidingWindowRateLimiter
 {
 	private redis: Redis;
+	private name: string;
 	private limit: number;
 	/**
 	 * In seconds
 	 */
 	private interval: number;
 
-	constructor(redisClient: Redis, limit: number, interval: Duration) {
+	constructor(
+		redisClient: Redis,
+		name: string,
+		limit: number,
+		interval: Duration,
+	) {
 		const intervalSeconds = interval.seconds;
 		if (limit <= 0 || intervalSeconds <= 0) {
 			throw new Error("Limit and interval must be positive values.");
 		}
 
 		this.redis = redisClient;
+		this.name = name;
 		this.limit = limit;
 		this.interval = intervalSeconds;
 
@@ -153,8 +161,8 @@ export class IORedisSlidingWindowRateLimiter
 		const now = Date.now() / 1000;
 		const currentWindow = Math.floor(now / this.interval);
 		const previousWindow = currentWindow - 1;
-		const currentKey = `${PREFIX}:${key}:${currentWindow}`;
-		const previousKey = `${PREFIX}:${key}:${previousWindow}`;
+		const currentKey = getKey(PREFIX, this.name, key, String(currentWindow));
+		const previousKey = getKey(PREFIX, this.name, key, String(previousWindow));
 		return [currentKey, previousKey];
 	}
 

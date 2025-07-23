@@ -17,6 +17,7 @@ describe("LeakyBucketRateLimiter", () => {
 
 		rateLimiter = new IORedisLeakyBucketRateLimiter(
 			redisClient,
+			"test-lb",
 			5, // capacity
 			Duration.ofSeconds(60), // interval for TTL
 		);
@@ -26,6 +27,7 @@ describe("LeakyBucketRateLimiter", () => {
 		it("should create a rate limiter with valid parameters", () => {
 			const limiter = new IORedisLeakyBucketRateLimiter(
 				redisClient,
+				"test-lb",
 				10,
 				Duration.ofSeconds(60),
 			);
@@ -37,6 +39,7 @@ describe("LeakyBucketRateLimiter", () => {
 				() =>
 					new IORedisLeakyBucketRateLimiter(
 						redisClient,
+						"test-lb",
 						0,
 						Duration.ofSeconds(60),
 					),

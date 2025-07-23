@@ -17,6 +17,7 @@ describe("SlidingWindowRateLimiter", () => {
 
 		rateLimiter = new IORedisSlidingWindowRateLimiter(
 			redisClient,
+			"test-sw",
 			10, // limit
 			Duration.ofSeconds(60), // interval (60 seconds)
 		);

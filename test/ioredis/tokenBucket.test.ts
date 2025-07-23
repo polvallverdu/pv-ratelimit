@@ -18,6 +18,7 @@ describe("TokenBucketRateLimiter", () => {
 		// Set up a basic rate limiter for most tests
 		rateLimiter = new IORedisTokenBucketRateLimiter(
 			redisClient,
+			"test-tb",
 			10, // capacity
 			5, // refillAmount
 			Duration.ofSeconds(60), // refillInterval (60 seconds)
@@ -35,6 +36,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should create a rate limiter with valid parameters", () => {
 			const limiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				10,
 				5,
 				Duration.ofSeconds(60),
@@ -46,6 +48,7 @@ describe("TokenBucketRateLimiter", () => {
 			expect(() => {
 				new IORedisTokenBucketRateLimiter(
 					redisClient,
+					"test-tb",
 					0,
 					5,
 					Duration.ofSeconds(60),
@@ -59,6 +62,7 @@ describe("TokenBucketRateLimiter", () => {
 			expect(() => {
 				new IORedisTokenBucketRateLimiter(
 					redisClient,
+					"test-tb",
 					-1,
 					5,
 					Duration.ofSeconds(60),
@@ -72,6 +76,7 @@ describe("TokenBucketRateLimiter", () => {
 			expect(() => {
 				new IORedisTokenBucketRateLimiter(
 					redisClient,
+					"test-tb",
 					10,
 					0,
 					Duration.ofSeconds(60),
@@ -85,6 +90,7 @@ describe("TokenBucketRateLimiter", () => {
 			expect(() => {
 				new IORedisTokenBucketRateLimiter(
 					redisClient,
+					"test-tb",
 					10,
 					-1,
 					Duration.ofSeconds(60),
@@ -98,6 +104,7 @@ describe("TokenBucketRateLimiter", () => {
 			expect(() => {
 				new IORedisTokenBucketRateLimiter(
 					redisClient,
+					"test-tb",
 					10,
 					5,
 					Duration.ofSeconds(0),
@@ -111,6 +118,7 @@ describe("TokenBucketRateLimiter", () => {
 			expect(() => {
 				new IORedisTokenBucketRateLimiter(
 					redisClient,
+					"test-tb",
 					10,
 					5,
 					Duration.ofSeconds(-1),
@@ -183,6 +191,7 @@ describe("TokenBucketRateLimiter", () => {
 			// Create a limiter with short refill interval for testing
 			const fastRefillLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				10, // capacity
 				3, // refillAmount
 				Duration.ofSeconds(1), // refillInterval (1 second)
@@ -209,6 +218,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should handle multiple refills when enough time has passed", async () => {
 			const fastRefillLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				10, // capacity
 				2, // refillAmount
 				Duration.ofSeconds(1), // refillInterval (1 second)
@@ -235,6 +245,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should not exceed capacity when refilling", async () => {
 			const fastRefillLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				5, // small capacity
 				10, // large refillAmount
 				Duration.ofSeconds(1), // refillInterval (1 second)
@@ -378,6 +389,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should reflect token refills over time", async () => {
 			const fastRefillLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				10, // capacity
 				2, // refillAmount
 				Duration.ofSeconds(1), // refillInterval (1 second)
@@ -410,6 +422,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should not exceed capacity even with multiple refills", async () => {
 			const fastRefillLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				5, // small capacity
 				10, // large refillAmount
 				Duration.ofSeconds(1), // refillInterval (1 second)
@@ -437,6 +450,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should update bucket state when refills occur", async () => {
 			const fastRefillLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				10, // capacity
 				3, // refillAmount
 				Duration.ofSeconds(1), // refillInterval (1 second)
@@ -492,6 +506,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should handle fractional refill calculations", async () => {
 			const fractionalLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				10,
 				1,
 				Duration.ofSeconds(0.5), // 0.5 second refill interval
@@ -565,6 +580,7 @@ describe("TokenBucketRateLimiter", () => {
 
 			const customLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				25,
 				5,
 				Duration.ofSeconds(60),
@@ -613,6 +629,7 @@ describe("TokenBucketRateLimiter", () => {
 		it("should handle fractional time calculations correctly", async () => {
 			const fastRefillLimiter = new IORedisTokenBucketRateLimiter(
 				redisClient,
+				"test-tb",
 				10,
 				1,
 				Duration.ofSeconds(0.5), // 0.5 second refill interval

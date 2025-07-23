@@ -17,6 +17,7 @@ describe("FixedWindowRateLimiter", () => {
 
 		rateLimiter = new IORedisFixedWindowRateLimiter(
 			redisClient,
+			"test-fw",
 			10, // limit
 			Duration.ofSeconds(60), // interval (60 seconds)
 		);
@@ -30,6 +31,7 @@ describe("FixedWindowRateLimiter", () => {
 		it("should create a rate limiter with valid parameters", () => {
 			const limiter = new IORedisFixedWindowRateLimiter(
 				redisClient,
+				"test-fw",
 				10,
 				Duration.ofSeconds(60),
 			);
@@ -41,6 +43,7 @@ describe("FixedWindowRateLimiter", () => {
 			expect(() => {
 				new IORedisFixedWindowRateLimiter(
 					redisClient,
+					"test-fw",
 					0,
 					Duration.ofSeconds(60),
 				);
@@ -51,6 +54,7 @@ describe("FixedWindowRateLimiter", () => {
 			expect(() => {
 				new IORedisFixedWindowRateLimiter(
 					redisClient,
+					"test-fw",
 					10,
 					Duration.ofSeconds(0),
 				);

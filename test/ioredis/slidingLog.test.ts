@@ -17,6 +17,7 @@ describe("SlidingLogRateLimiter", () => {
 
 		rateLimiter = new IORedisSlidingLogRateLimiter(
 			redisClient,
+			"test-sl",
 			5, // limit
 			Duration.ofSeconds(10), // interval (10 seconds)
 		);
@@ -30,6 +31,7 @@ describe("SlidingLogRateLimiter", () => {
 		it("should create a rate limiter with valid parameters", () => {
 			const limiter = new IORedisSlidingLogRateLimiter(
 				redisClient,
+				"test-sl",
 				10,
 				Duration.ofSeconds(60),
 			);
@@ -41,6 +43,7 @@ describe("SlidingLogRateLimiter", () => {
 			expect(() => {
 				new IORedisSlidingLogRateLimiter(
 					redisClient,
+					"test-sl",
 					0,
 					Duration.ofSeconds(60),
 				);
