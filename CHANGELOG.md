@@ -1,5 +1,11 @@
 # pv-ratelimit
 
+## 1.2.0
+
+### Minor Changes
+
+- 8f1da25: added names to the ratelimiters
+
 ## 1.1.0
 
 ### Minor Changes
