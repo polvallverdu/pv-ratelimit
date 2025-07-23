@@ -6,50 +6,50 @@ import { useRedisContainer } from "../__utils__/containers";
 import { runSlidingLogRateLimiterTests } from "../__utils__/slidingLog.sharedTests";
 
 describe("SlidingLogRateLimiter", () => {
-  const getRedisContainer = useRedisContainer();
+	const getRedisContainer = useRedisContainer();
 
-  let redisClient: Redis;
+	let redisClient: Redis;
 
-  beforeEach(() => {
-    const container = getRedisContainer();
-    redisClient = new Redis(container?.getConnectionUrl() ?? "");
-  });
+	beforeEach(() => {
+		const container = getRedisContainer();
+		redisClient = new Redis(container?.getConnectionUrl() ?? "");
+	});
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+	afterEach(() => {
+		vi.useRealTimers();
+	});
 
-  describe("Constructor", () => {
-    it("should create a rate limiter with valid parameters", () => {
-      const limiter = new IORedisSlidingLogRateLimiter(
-        redisClient,
-        "test-sl",
-        10,
-        Duration.ofSeconds(60)
-      );
-      expect(limiter.getLimit()).toBe(10);
-      expect(limiter.getInterval()).toBe(60);
-    });
+	describe("Constructor", () => {
+		it("should create a rate limiter with valid parameters", () => {
+			const limiter = new IORedisSlidingLogRateLimiter(
+				redisClient,
+				"test-sl",
+				10,
+				Duration.ofSeconds(60),
+			);
+			expect(limiter.getLimit()).toBe(10);
+			expect(limiter.getInterval()).toBe(60);
+		});
 
-    it("should throw error for zero limit", () => {
-      expect(() => {
-        new IORedisSlidingLogRateLimiter(
-          redisClient,
-          "test-sl",
-          0,
-          Duration.ofSeconds(60)
-        );
-      }).toThrow("Limit and interval must be positive values.");
-    });
-  });
+		it("should throw error for zero limit", () => {
+			expect(() => {
+				new IORedisSlidingLogRateLimiter(
+					redisClient,
+					"test-sl",
+					0,
+					Duration.ofSeconds(60),
+				);
+			}).toThrow("Limit and interval must be positive values.");
+		});
+	});
 
-  runSlidingLogRateLimiterTests(
-    () =>
-      new IORedisSlidingLogRateLimiter(
-        redisClient,
-        "test-sl",
-        5,
-        Duration.ofSeconds(10)
-      )
-  );
+	runSlidingLogRateLimiterTests(
+		() =>
+			new IORedisSlidingLogRateLimiter(
+				redisClient,
+				"test-sl",
+				5,
+				Duration.ofSeconds(10),
+			),
+	);
 });

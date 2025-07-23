@@ -6,26 +6,26 @@ import { useRedisContainer } from "../__utils__/containers";
 import { runSlidingWindowRateLimiterTests } from "../__utils__/slidingWindow.sharedTests";
 
 describe("SlidingWindowRateLimiter", () => {
-  const getRedisContainer = useRedisContainer();
+	const getRedisContainer = useRedisContainer();
 
-  let redisClient: Redis;
+	let redisClient: Redis;
 
-  beforeEach(() => {
-    const container = getRedisContainer();
-    redisClient = new Redis(container?.getConnectionUrl() ?? "");
-  });
+	beforeEach(() => {
+		const container = getRedisContainer();
+		redisClient = new Redis(container?.getConnectionUrl() ?? "");
+	});
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+	afterEach(() => {
+		vi.useRealTimers();
+	});
 
-  runSlidingWindowRateLimiterTests(
-    () =>
-      new IORedisSlidingWindowRateLimiter(
-        redisClient,
-        "test-sw",
-        10,
-        Duration.ofSeconds(60)
-      )
-  );
+	runSlidingWindowRateLimiterTests(
+		() =>
+			new IORedisSlidingWindowRateLimiter(
+				redisClient,
+				"test-sw",
+				10,
+				Duration.ofSeconds(60),
+			),
+	);
 });
