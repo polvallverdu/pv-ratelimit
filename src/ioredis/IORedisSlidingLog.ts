@@ -2,27 +2,27 @@ import { randomUUID } from "node:crypto";
 import type Redis from "ioredis";
 import type { Duration } from "pv-duration";
 import type {
-  SlidingLogRateLimiter,
-  SlidingLogResult,
+	SlidingLogRateLimiter,
+	SlidingLogResult,
 } from "../algorithms/slidingLog";
 import { getKey } from "../utils/key";
 
 declare module "ioredis" {
-  interface Redis {
-    consumeSlidingLog(
-      key: string,
-      limit: number,
-      interval: number,
-      currentTime: number,
-      requestId: string
-    ): Promise<[number, number]>;
-    getSlidingLog(
-      key: string,
-      limit: number,
-      interval: number,
-      currentTime: number
-    ): Promise<number>;
-  }
+	interface Redis {
+		consumeSlidingLog(
+			key: string,
+			limit: number,
+			interval: number,
+			currentTime: number,
+			requestId: string,
+		): Promise<[number, number]>;
+		getSlidingLog(
+			key: string,
+			limit: number,
+			interval: number,
+			currentTime: number,
+		): Promise<number>;
+	}
 }
 
 const PREFIX = "pvrl-sliding-log";
@@ -74,33 +74,33 @@ const PREFIX = "pvrl-sliding-log";
  * ```
  */
 export class IORedisSlidingLogRateLimiter implements SlidingLogRateLimiter {
-  private redis: Redis;
-  private name: string;
-  private limit: number;
-  /**
-   * In seconds
-   */
-  private interval: number;
+	private redis: Redis;
+	private name: string;
+	private limit: number;
+	/**
+	 * In seconds
+	 */
+	private interval: number;
 
-  constructor(
-    redisClient: Redis,
-    name: string,
-    limit: number,
-    interval: Duration
-  ) {
-    const intervalSeconds = interval.seconds;
-    if (limit <= 0 || intervalSeconds <= 0) {
-      throw new Error("Limit and interval must be positive values.");
-    }
+	constructor(
+		redisClient: Redis,
+		name: string,
+		limit: number,
+		interval: Duration,
+	) {
+		const intervalSeconds = interval.seconds;
+		if (limit <= 0 || intervalSeconds <= 0) {
+			throw new Error("Limit and interval must be positive values.");
+		}
 
-    this.redis = redisClient;
-    this.name = name;
-    this.limit = limit;
-    this.interval = intervalSeconds;
+		this.redis = redisClient;
+		this.name = name;
+		this.limit = limit;
+		this.interval = intervalSeconds;
 
-    this.redis.defineCommand("consumeSlidingLog", {
-      numberOfKeys: 1,
-      lua: `
+		this.redis.defineCommand("consumeSlidingLog", {
+			numberOfKeys: 1,
+			lua: `
           local key = KEYS[1]
           local limit = tonumber(ARGV[1])
           local interval = tonumber(ARGV[2])
@@ -122,11 +122,11 @@ export class IORedisSlidingLogRateLimiter implements SlidingLogRateLimiter {
             return {0, 0}
           end
         `,
-    });
+		});
 
-    this.redis.defineCommand("getSlidingLog", {
-      numberOfKeys: 1,
-      lua: `
+		this.redis.defineCommand("getSlidingLog", {
+			numberOfKeys: 1,
+			lua: `
           local key = KEYS[1]
           local limit = tonumber(ARGV[1])
           local interval = tonumber(ARGV[2])
@@ -145,53 +145,53 @@ export class IORedisSlidingLogRateLimiter implements SlidingLogRateLimiter {
   
           return remaining
         `,
-    });
-  }
+		});
+	}
 
-  private getKey(key: string): string {
-    return getKey(PREFIX, this.name, key);
-  }
+	private getKey(key: string): string {
+		return getKey(PREFIX, this.name, key);
+	}
 
-  /**
-   * Attempts to consume a token for a given key.
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the result of the operation.
-   */
-  public async consume(key: string): Promise<SlidingLogResult> {
-    const redisKey = this.getKey(key);
-    const now = Date.now() / 1000;
-    const requestId = `${now}:${randomUUID()}`;
+	/**
+	 * Attempts to consume a token for a given key.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the result of the operation.
+	 */
+	public async consume(key: string): Promise<SlidingLogResult> {
+		const redisKey = this.getKey(key);
+		const now = Date.now() / 1000;
+		const requestId = `${now}:${randomUUID()}`;
 
-    const [success, remaining] = await this.redis.consumeSlidingLog(
-      redisKey,
-      this.limit,
-      this.interval,
-      now,
-      requestId
-    );
+		const [success, remaining] = await this.redis.consumeSlidingLog(
+			redisKey,
+			this.limit,
+			this.interval,
+			now,
+			requestId,
+		);
 
-    return {
-      success: success === 1,
-      remaining: remaining,
-    };
-  }
+		return {
+			success: success === 1,
+			remaining: remaining,
+		};
+	}
 
-  /**
-   * Retrieves the number of remaining requests for a given key.
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the number of remaining requests.
-   */
-  public async getRemaining(key: string): Promise<number> {
-    const redisKey = this.getKey(key);
-    const now = Date.now() / 1000;
-    return this.redis.getSlidingLog(redisKey, this.limit, this.interval, now);
-  }
+	/**
+	 * Retrieves the number of remaining requests for a given key.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the number of remaining requests.
+	 */
+	public async getRemaining(key: string): Promise<number> {
+		const redisKey = this.getKey(key);
+		const now = Date.now() / 1000;
+		return this.redis.getSlidingLog(redisKey, this.limit, this.interval, now);
+	}
 
-  public getLimit(): number {
-    return this.limit;
-  }
+	public getLimit(): number {
+		return this.limit;
+	}
 
-  public getInterval(): number {
-    return this.interval;
-  }
+	public getInterval(): number {
+		return this.interval;
+	}
 }
