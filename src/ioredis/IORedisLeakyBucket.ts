@@ -6,6 +6,7 @@ import type {
 	LeakyBucketResult,
 	LeakyBucketState,
 } from "../algorithms/leakyBucket";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
 	interface Redis {
@@ -22,7 +23,7 @@ declare module "ioredis" {
 	}
 }
 
-const PREFIX = "leaky_bucket";
+const PREFIX = "pvrl-leaky-bucket";
 
 /**
  * A Redis-backed leaky bucket rate limiter, implemented as a capped queue.
@@ -66,19 +67,26 @@ const PREFIX = "leaky_bucket";
  */
 export class IORedisLeakyBucketRateLimiter implements LeakyBucketRateLimiter {
 	private redis: Redis;
+	private name: string;
 	private capacity: number;
 	/**
 	 * In seconds
 	 */
 	private interval: number;
 
-	constructor(redisClient: Redis, capacity: number, interval: Duration) {
+	constructor(
+		redisClient: Redis,
+		name: string,
+		capacity: number,
+		interval: Duration,
+	) {
 		const intervalSeconds = interval.seconds;
 		if (capacity <= 0 || intervalSeconds <= 0) {
 			throw new Error("Capacity and interval must be positive values.");
 		}
 
 		this.redis = redisClient;
+		this.name = name;
 		this.capacity = capacity;
 		this.interval = intervalSeconds;
 
@@ -119,7 +127,7 @@ export class IORedisLeakyBucketRateLimiter implements LeakyBucketRateLimiter {
 	}
 
 	private getKey(key: string): string {
-		return `${PREFIX}:${key}`;
+		return getKey(PREFIX, this.name, key);
 	}
 
 	/**

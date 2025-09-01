@@ -5,6 +5,7 @@ import type {
 	TokenConsumeResult,
 	TokenCountResult,
 } from "../algorithms/tokenBucket";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
 	interface Redis {
@@ -26,7 +27,7 @@ declare module "ioredis" {
 	}
 }
 
-const PREFIX = "token_bucket";
+const PREFIX = "pvrl-token-bucket";
 
 /**
  * A Redis-backed token bucket rate limiter implementation.
@@ -106,6 +107,7 @@ const PREFIX = "token_bucket";
  */
 export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 	private redis: Redis;
+	private name: string;
 	private capacity: number;
 	private refillAmount: number;
 	/**
@@ -115,6 +117,7 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 
 	constructor(
 		redisClient: Redis,
+		name: string,
 		capacity: number,
 		refillAmount: number,
 		refillInterval: Duration,
@@ -127,6 +130,7 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 		}
 
 		this.redis = redisClient;
+		this.name = name;
 		this.capacity = capacity;
 		this.refillAmount = refillAmount;
 		this.refillInterval = refillIntervalSeconds;
@@ -249,7 +253,7 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 		key: string,
 		tokens: number = 1,
 	): Promise<TokenConsumeResult> {
-		const redisKey = `${PREFIX}:${key}`;
+		const redisKey = getKey(PREFIX, this.name, key);
 
 		const [successFlag, remaining, nextRefill] = await this.redis.consumeToken(
 			redisKey,
@@ -273,7 +277,7 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 	 * @returns A promise that resolves to the current token count and next refill time.
 	 */
 	public async getRemainingTokens(key: string): Promise<TokenCountResult> {
-		const redisKey = `${PREFIX}:${key}`;
+		const redisKey = getKey(PREFIX, this.name, key);
 
 		const [remaining, nextRefill] = await this.redis.getRemainingTokens(
 			redisKey,
@@ -291,7 +295,7 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 
 	public async addTokens(key: string, amount: number): Promise<void> {
 		if (amount <= 0) return;
-		const redisKey = `${PREFIX}:${key}`;
+		const redisKey = getKey(PREFIX, this.name, key);
 		const addScript = `
         local key = KEYS[1]
         local amount = tonumber(ARGV[1])
@@ -329,7 +333,7 @@ export class IORedisTokenBucketRateLimiter implements TokenBucketRateLimiter {
 
 	public async removeTokens(key: string, amount: number): Promise<void> {
 		if (amount <= 0) return;
-		const redisKey = `${PREFIX}:${key}`;
+		const redisKey = getKey(PREFIX, this.name, key);
 		const removeScript = `
         local key = KEYS[1]
         local amount = tonumber(ARGV[1])

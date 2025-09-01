@@ -4,6 +4,7 @@ import type {
 	FixedWindowRateLimiter,
 	FixedWindowResult,
 } from "../algorithms/fixedWindow";
+import { getKey } from "../utils/key";
 
 declare module "ioredis" {
 	interface Redis {
@@ -16,7 +17,7 @@ declare module "ioredis" {
 	}
 }
 
-const PREFIX = "fixed_window";
+const PREFIX = "pvrl-fixed-window";
 
 /**
  * A Redis-backed fixed window rate limiter.
@@ -70,19 +71,26 @@ const PREFIX = "fixed_window";
  */
 export class IORedisFixedWindowRateLimiter implements FixedWindowRateLimiter {
 	private redis: Redis;
+	private name: string;
 	private limit: number;
 	/**
 	 * In seconds
 	 */
 	private interval: number;
 
-	constructor(redisClient: Redis, limit: number, interval: Duration) {
+	constructor(
+		redisClient: Redis,
+		name: string,
+		limit: number,
+		interval: Duration,
+	) {
 		const intervalSeconds = interval.seconds;
 		if (limit <= 0 || intervalSeconds <= 0) {
 			throw new Error("Limit and interval must be positive values.");
 		}
 
 		this.redis = redisClient;
+		this.name = name;
 		this.limit = limit;
 		this.interval = intervalSeconds;
 
@@ -136,7 +144,7 @@ export class IORedisFixedWindowRateLimiter implements FixedWindowRateLimiter {
 
 	private getKey(key: string): string {
 		const window = Math.floor(Date.now() / 1000 / this.interval);
-		return `${PREFIX}:${key}:${window}`;
+		return `${getKey(PREFIX, this.name, key)}:${String(window)}`;
 	}
 
 	/**

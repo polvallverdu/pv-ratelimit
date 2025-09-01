@@ -15,7 +15,7 @@ A comprehensive, type-safe TypeScript library providing multiple rate limiting a
 - ⚡ **High performance** - Optimized Redis Lua scripts for atomic operations and Redis Cluster support
 - 🧪 **Well tested** - Comprehensive test coverage for all algorithms
 - 🔧 **Flexible** - Easy to switch between algorithms and backends
-- 🚀 **Production ready** - Battle-tested, currently being used by [boreal.chat](https://boreal.chat) and [imagerouter.dev](https://imagerouter.dev)
+- 🚀 **Production ready** - Battle-tested, currently being used by [boreal.chat](https://boreal.chat)
 
 ## 📦 Installation
 
