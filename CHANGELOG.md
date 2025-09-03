@@ -1,5 +1,11 @@
 # pv-ratelimit
 
+## 1.3.0
+
+### Minor Changes
+
+- ba99abc: added in-memory limiters
+
 ## 1.2.0
 
 ### Minor Changes
