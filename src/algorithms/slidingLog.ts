@@ -34,10 +34,9 @@ export interface SlidingLogRateLimiter {
 	/**
 	 * Attempts to consume a token for a given key.
 	 * @param key A unique identifier for the client.
-	 * @param uniqueRequestId An optional unique ID for the request.
 	 * @returns A promise resolving to the result of the operation.
 	 */
-	consume(key: string, uniqueRequestId?: string): Promise<SlidingLogResult>;
+	consume(key: string): Promise<SlidingLogResult>;
 
 	/**
 	 * Retrieves the number of remaining requests for a given key.

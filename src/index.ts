@@ -46,3 +46,13 @@ export {
 	IORedisThrottlingRateLimiter,
 	IORedisTokenBucketRateLimiter,
 } from "./ioredis";
+
+// Export memory implementations
+export {
+	MemoryFixedWindow,
+	MemoryLeakyBucket,
+	MemorySlidingLog,
+	MemorySlidingWindow,
+	MemoryThrottling,
+	MemoryTokenBucket,
+} from "./memory";

@@ -155,16 +155,12 @@ export class IORedisSlidingLogRateLimiter implements SlidingLogRateLimiter {
 	/**
 	 * Attempts to consume a token for a given key.
 	 * @param key A unique identifier for the client.
-	 * @param uniqueRequestId An optional unique ID for the request.
 	 * @returns A promise resolving to the result of the operation.
 	 */
-	public async consume(
-		key: string,
-		uniqueRequestId?: string,
-	): Promise<SlidingLogResult> {
+	public async consume(key: string): Promise<SlidingLogResult> {
 		const redisKey = this.getKey(key);
 		const now = Date.now() / 1000;
-		const requestId = uniqueRequestId || `${now}:${randomUUID()}`;
+		const requestId = `${now}:${randomUUID()}`;
 
 		const [success, remaining] = await this.redis.consumeSlidingLog(
 			redisKey,
