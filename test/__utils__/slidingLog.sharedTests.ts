@@ -30,22 +30,25 @@ export function runSlidingLogRateLimiterTests(
 			const now = Date.now();
 			vi.setSystemTime(now);
 
-			// Consume all available slots
-			for (let i = 0; i < 5; i++) {
-				vi.setSystemTime(now + i * 1000); // Space out requests
+			// Consume at 0s
+			await rateLimiter.consume("sliding-key");
+
+			// Consume at 1s, 2s, 3s, 4s
+			for (let i = 1; i < 5; i++) {
+				vi.advanceTimersByTime(1000);
 				await rateLimiter.consume("sliding-key");
 			}
 
-			// At 9 seconds, still denied
-			vi.setSystemTime(now + 9 * 1000);
+			// At 9s, still denied
+			vi.advanceTimersByTime(5000);
 			let result = await rateLimiter.consume("sliding-key");
 			expect(result.success).toBe(false);
 
-			// At 10.1 seconds, the first request has expired
-			vi.setSystemTime(now + 10.1 * 1000);
+			// At 10.1s, the first request has expired
+			vi.advanceTimersByTime(1100);
 			result = await rateLimiter.consume("sliding-key");
 			expect(result.success).toBe(true);
-			expect(result.remaining).toBe(0); // 5 in log - 1 expired + 1 new = 5, so 5-5=0 remaining
+			expect(result.remaining).toBe(0); // 4 valid + 1 new = 5, so 5-5=0 remaining
 		});
 	});
 
