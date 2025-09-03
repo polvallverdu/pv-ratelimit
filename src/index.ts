@@ -48,4 +48,11 @@ export {
 } from "./ioredis";
 
 // Export memory implementations
-export { MemoryFixedWindow } from "./memory";
+export {
+	MemoryFixedWindow,
+	MemoryLeakyBucket,
+	MemorySlidingLog,
+	MemorySlidingWindow,
+	MemoryThrottling,
+	MemoryTokenBucket,
+} from "./memory";
