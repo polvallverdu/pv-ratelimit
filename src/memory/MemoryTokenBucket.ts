@@ -87,7 +87,6 @@ export class MemoryTokenBucket implements TokenBucketRateLimiter {
 
 		// Consume tokens
 		bucket.tokens -= tokens;
-		bucket.lastRefill = now;
 
 		return {
 			success: true,
