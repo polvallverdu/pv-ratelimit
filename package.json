@@ -1,7 +1,7 @@
 {
 	"name": "pv-ratelimit",
 	"type": "module",
-	"version": "1.3.0",
+	"version": "1.3.1",
 	"description": "Simple rate limiters for redis",
 	"license": "Apache-2.0",
 	"main": "./dist/index.js",
