@@ -1,89 +1,89 @@
 {
-	"name": "pv-ratelimit",
-	"type": "module",
-	"version": "1.3.1",
-	"description": "Simple rate limiters for redis",
-	"license": "Apache-2.0",
-	"main": "./dist/index.js",
-	"module": "./dist/index.mjs",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/polvallverdu/pv-duration.git"
-	},
-	"exports": {
-		".": {
-			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.cts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./dummy": {
-			"import": {
-				"types": "./dist/dummy.d.ts",
-				"default": "./dist/dummy.js"
-			},
-			"require": {
-				"types": "./dist/dummy.d.cts",
-				"default": "./dist/dummy.cjs"
-			}
-		},
-		"./ioredis": {
-			"import": {
-				"types": "./dist/ioredis.d.ts",
-				"default": "./dist/ioredis.js"
-			},
-			"require": {
-				"types": "./dist/ioredis.d.cts",
-				"default": "./dist/ioredis.cjs"
-			}
-		},
-		"./memory": {
-			"import": {
-				"types": "./dist/memory.d.ts",
-				"default": "./dist/memory.js"
-			},
-			"require": {
-				"types": "./dist/memory.d.cts",
-				"default": "./dist/memory.cjs"
-			}
-		}
-	},
-	"scripts": {
-		"build": "bunchee --tsconfig tsconfig.json",
-		"dev": "bunchee -w --tsconfig tsconfig.json --no-clean",
-		"test": "vitest",
-		"test:coverage": "vitest --coverage",
-		"check": "biome check",
-		"check:fix": "biome check --write",
-		"typecheck": "tsc --noEmit"
-	},
-	"devDependencies": {
-		"@types/bun": "latest",
-		"typescript": "^5.8.3",
-		"vitest": "^3.2.4",
-		"testcontainers": "^11.2.1",
-		"@testcontainers/redis": "^11.2.1",
-		"bunchee": "^6.5.4",
-		"@biomejs/biome": "2.1.1",
-		"@changesets/cli": "^2.29.5"
-	},
-	"dependencies": {
-		"pv-duration": "^1.0.1"
-	},
-	"types": "./dist/index.d.ts",
-	"packageManager": "bun@1.2.13",
-	"peerDependencies": {
-		"ioredis": ">=5"
-	},
-	"files": [
-		"dist",
-		"README.md",
-		"LICENSE",
-		"package.json"
-	],
-	"sideEffects": false
+  "name": "pv-ratelimit",
+  "type": "module",
+  "version": "1.3.2",
+  "description": "Simple rate limiters for redis",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/polvallverdu/pv-duration.git"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./dummy": {
+      "import": {
+        "types": "./dist/dummy.d.ts",
+        "default": "./dist/dummy.js"
+      },
+      "require": {
+        "types": "./dist/dummy.d.cts",
+        "default": "./dist/dummy.cjs"
+      }
+    },
+    "./ioredis": {
+      "import": {
+        "types": "./dist/ioredis.d.ts",
+        "default": "./dist/ioredis.js"
+      },
+      "require": {
+        "types": "./dist/ioredis.d.cts",
+        "default": "./dist/ioredis.cjs"
+      }
+    },
+    "./memory": {
+      "import": {
+        "types": "./dist/memory.d.ts",
+        "default": "./dist/memory.js"
+      },
+      "require": {
+        "types": "./dist/memory.d.cts",
+        "default": "./dist/memory.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "bunchee --tsconfig tsconfig.json",
+    "dev": "bunchee -w --tsconfig tsconfig.json --no-clean",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "check": "biome check",
+    "check:fix": "biome check --write",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
+    "testcontainers": "^11.2.1",
+    "@testcontainers/redis": "^11.2.1",
+    "bunchee": "^6.5.4",
+    "@biomejs/biome": "2.1.1",
+    "@changesets/cli": "^2.29.5"
+  },
+  "dependencies": {
+    "pv-duration": "^1.0.1"
+  },
+  "types": "./dist/index.d.ts",
+  "packageManager": "bun@1.2.13",
+  "peerDependencies": {
+    "ioredis": ">=5"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "sideEffects": false
 }
