@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { Duration } from "pv-duration";
 import type {
 	LeakyBucketRateLimiter,
@@ -7,8 +6,6 @@ import type {
 } from "../algorithms/leakyBucket";
 
 interface QueueItem {
-	/** Unique ID of the request */
-	id: string;
 	/** Expiration timestamp in seconds */
 	expiresAt: number;
 }
@@ -86,16 +83,11 @@ export class MemoryLeakyBucket implements LeakyBucketRateLimiter {
 	/**
 	 * Attempts to add a request to the bucket's queue.
 	 * @param key A unique identifier for the client.
-	 * @param uniqueRequestId An optional unique ID for the request.
 	 * @returns A promise resolving to the result of the operation.
 	 */
-	async consume(
-		key: string,
-		uniqueRequestId?: string,
-	): Promise<LeakyBucketResult> {
+	async consume(key: string): Promise<LeakyBucketResult> {
 		const now = Math.floor(Date.now() / 1000);
 		const queue = this.getOrCreateQueue(key);
-		const requestId = uniqueRequestId || randomUUID();
 
 		// Clean expired items from the queue
 		this.cleanupExpired(queue, now);
@@ -111,7 +103,6 @@ export class MemoryLeakyBucket implements LeakyBucketRateLimiter {
 		// Add new request to queue
 		const expiresAt = now + this.interval;
 		queue.items.push({
-			id: requestId,
 			expiresAt,
 		});
 
