@@ -1,5 +1,11 @@
 # pv-ratelimit
 
+## 1.3.1
+
+### Patch Changes
+
+- 417a792: fix: no request id on leaky bucket
+
 ## 1.3.0
 
 ### Minor Changes
