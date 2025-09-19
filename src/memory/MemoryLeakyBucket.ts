@@ -1,18 +1,18 @@
 import type { Duration } from "pv-duration";
 import type {
-  LeakyBucketRateLimiter,
-  LeakyBucketResult,
-  LeakyBucketState,
+	LeakyBucketRateLimiter,
+	LeakyBucketResult,
+	LeakyBucketState,
 } from "../algorithms/leakyBucket";
 
 interface QueueItem {
-  /** Expiration timestamp in seconds */
-  expiresAt: number;
+	/** Expiration timestamp in seconds */
+	expiresAt: number;
 }
 
 interface QueueState {
-  /** Items in the queue */
-  items: QueueItem[];
+	/** Items in the queue */
+	items: QueueItem[];
 }
 
 /**
@@ -56,150 +56,150 @@ interface QueueState {
  * ```
  */
 export class MemoryLeakyBucket implements LeakyBucketRateLimiter {
-  private readonly queues = new Map<string, QueueState>();
-  private readonly capacity: number;
-  /**
-   * In seconds
-   */
-  private readonly interval: number;
+	private readonly queues = new Map<string, QueueState>();
+	private readonly capacity: number;
+	/**
+	 * In seconds
+	 */
+	private readonly interval: number;
 
-  /**
-   * Creates a new memory-based leaky bucket rate limiter.
-   * @param capacity Maximum number of requests that can be queued
-   * @param interval Time after which requests expire
-   */
-  constructor(capacity: number, interval: Duration) {
-    if (capacity <= 0) {
-      throw new Error("Capacity must be greater than 0");
-    }
-    if (interval.seconds <= 0) {
-      throw new Error("Interval must be greater than 0");
-    }
+	/**
+	 * Creates a new memory-based leaky bucket rate limiter.
+	 * @param capacity Maximum number of requests that can be queued
+	 * @param interval Time after which requests expire
+	 */
+	constructor(capacity: number, interval: Duration) {
+		if (capacity <= 0) {
+			throw new Error("Capacity must be greater than 0");
+		}
+		if (interval.seconds <= 0) {
+			throw new Error("Interval must be greater than 0");
+		}
 
-    this.capacity = capacity;
-    this.interval = interval.seconds;
-  }
+		this.capacity = capacity;
+		this.interval = interval.seconds;
+	}
 
-  /**
-   * Attempts to add a request to the bucket's queue.
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the result of the operation.
-   */
-  async consume(key: string): Promise<LeakyBucketResult> {
-    const now = Math.floor(Date.now() / 1000);
-    const queue = this.getOrCreateQueue(key);
+	/**
+	 * Attempts to add a request to the bucket's queue.
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the result of the operation.
+	 */
+	async consume(key: string): Promise<LeakyBucketResult> {
+		const now = Math.floor(Date.now() / 1000);
+		const queue = this.getOrCreateQueue(key);
 
-    // Clean expired items from the queue
-    this.cleanupExpired(queue, now);
+		// Clean expired items from the queue
+		this.cleanupExpired(queue, now);
 
-    // Check if queue has capacity
-    if (queue.items.length >= this.capacity) {
-      return {
-        success: false,
-        remaining: 0,
-      };
-    }
+		// Check if queue has capacity
+		if (queue.items.length >= this.capacity) {
+			return {
+				success: false,
+				remaining: 0,
+			};
+		}
 
-    // Add new request to queue
-    const expiresAt = now + this.interval;
-    queue.items.push({
-      expiresAt,
-    });
+		// Add new request to queue
+		const expiresAt = now + this.interval;
+		queue.items.push({
+			expiresAt,
+		});
 
-    return {
-      success: true,
-      remaining: this.capacity - queue.items.length,
-    };
-  }
+		return {
+			success: true,
+			remaining: this.capacity - queue.items.length,
+		};
+	}
 
-  /**
-   * Retrieves the current state of the bucket (queue size and remaining capacity).
-   * @param key A unique identifier for the client.
-   * @returns A promise resolving to the bucket's state.
-   */
-  async getState(key: string): Promise<LeakyBucketState> {
-    const now = Math.floor(Date.now() / 1000);
-    const queue = this.getOrCreateQueue(key);
+	/**
+	 * Retrieves the current state of the bucket (queue size and remaining capacity).
+	 * @param key A unique identifier for the client.
+	 * @returns A promise resolving to the bucket's state.
+	 */
+	async getState(key: string): Promise<LeakyBucketState> {
+		const now = Math.floor(Date.now() / 1000);
+		const queue = this.getOrCreateQueue(key);
 
-    // Clean expired items from the queue
-    this.cleanupExpired(queue, now);
+		// Clean expired items from the queue
+		this.cleanupExpired(queue, now);
 
-    const size = queue.items.length;
-    const remaining = Math.max(0, this.capacity - size);
+		const size = queue.items.length;
+		const remaining = Math.max(0, this.capacity - size);
 
-    return { size, remaining };
-  }
+		return { size, remaining };
+	}
 
-  /**
-   * Returns the capacity of the bucket.
-   */
-  getCapacity(): number {
-    return this.capacity;
-  }
+	/**
+	 * Returns the capacity of the bucket.
+	 */
+	getCapacity(): number {
+		return this.capacity;
+	}
 
-  /**
-   * Returns the interval in seconds after which requests expire.
-   */
-  getInterval(): number {
-    return this.interval;
-  }
+	/**
+	 * Returns the interval in seconds after which requests expire.
+	 */
+	getInterval(): number {
+		return this.interval;
+	}
 
-  /**
-   * Gets or creates a queue for the given key.
-   * @param key Unique identifier for the queue
-   * @returns Queue state
-   */
-  private getOrCreateQueue(key: string): QueueState {
-    let queue = this.queues.get(key);
-    if (!queue) {
-      queue = {
-        items: [],
-      };
-      this.queues.set(key, queue);
-    }
-    return queue;
-  }
+	/**
+	 * Gets or creates a queue for the given key.
+	 * @param key Unique identifier for the queue
+	 * @returns Queue state
+	 */
+	private getOrCreateQueue(key: string): QueueState {
+		let queue = this.queues.get(key);
+		if (!queue) {
+			queue = {
+				items: [],
+			};
+			this.queues.set(key, queue);
+		}
+		return queue;
+	}
 
-  /**
-   * Removes expired items from the queue.
-   * @param queue Queue state to clean up
-   * @param now Current timestamp in seconds
-   */
-  private cleanupExpired(queue: QueueState, now: number): void {
-    // Filter out expired items
-    queue.items = queue.items.filter((item) => item.expiresAt > now);
-  }
+	/**
+	 * Removes expired items from the queue.
+	 * @param queue Queue state to clean up
+	 * @param now Current timestamp in seconds
+	 */
+	private cleanupExpired(queue: QueueState, now: number): void {
+		// Filter out expired items
+		queue.items = queue.items.filter((item) => item.expiresAt > now);
+	}
 
-  /**
-   * Cleans up expired items across all queues.
-   * This can be called periodically to free memory.
-   */
-  cleanupAllExpired(): void {
-    const now = Math.floor(Date.now() / 1000);
+	/**
+	 * Cleans up expired items across all queues.
+	 * This can be called periodically to free memory.
+	 */
+	cleanupAllExpired(): void {
+		const now = Math.floor(Date.now() / 1000);
 
-    for (const [key, queue] of this.queues.entries()) {
-      this.cleanupExpired(queue, now);
+		for (const [key, queue] of this.queues.entries()) {
+			this.cleanupExpired(queue, now);
 
-      // Remove empty queues
-      if (queue.items.length === 0) {
-        this.queues.delete(key);
-      }
-    }
-  }
+			// Remove empty queues
+			if (queue.items.length === 0) {
+				this.queues.delete(key);
+			}
+		}
+	}
 
-  /**
-   * Gets the current number of active keys in storage.
-   * Useful for monitoring memory usage.
-   */
-  getActiveKeyCount(): number {
-    return this.queues.size;
-  }
+	/**
+	 * Gets the current number of active keys in storage.
+	 * Useful for monitoring memory usage.
+	 */
+	getActiveKeyCount(): number {
+		return this.queues.size;
+	}
 
-  /**
-   * Clears all stored data.
-   * Useful for testing or resetting the rate limiter.
-   */
-  clear(): void {
-    this.queues.clear();
-  }
+	/**
+	 * Clears all stored data.
+	 * Useful for testing or resetting the rate limiter.
+	 */
+	clear(): void {
+		this.queues.clear();
+	}
 }
